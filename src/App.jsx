@@ -30,10 +30,17 @@ const detailedLessonData = {
       '세포 호흡의 관점에서 소화계의 역할을 이해하고 설명할 수 있다.'
     ],
     videoTitle: '동기 유발 영상',
-    videoDescription:
-      '마라톤 선수가 경기 중 바나나를 먹는 장면을 보고, 먹은 음식이 몸속에서 어떻게 에너지로 이어지는지 생각해 본다.',
-    videoPlaceholder: '마라톤 선수가 경기 중 바나나를 먹는 영상이 들어갈 영역입니다.',
-    videoSupport: '먹은 음식이 소화되어 우리 몸의 에너지와 연결되는 과정을 떠올리며 영상을 살펴보세요.',
+    videoDescription: '다음 두 영상을 순서대로 시청해 봅시다.',
+    videos: [
+      {
+        title: '영상 1',
+        embedUrl: 'https://www.youtube.com/embed/6_dwzfdbgNk'
+      },
+      {
+        title: '영상 2',
+        embedUrl: 'https://www.youtube.com/embed/CAVuRsz3fxw'
+      }
+    ],
     icebreakQuestions: [
       '마라톤 선수가 먹은 바나나가 어떻게 근육을 움직이는 에너지가 될까요?',
       '소화되고 남은 물질은 어떻게 우리 몸을 빠져나올까요?'
@@ -578,8 +585,28 @@ function App() {
               </div>
               <p>{lesson.videoDescription}</p>
             </div>
-            <div className="placeholder-panel placeholder-panel--video">{lesson.videoPlaceholder}</div>
-            <p className="support-text">{lesson.videoSupport}</p>
+            {lesson.videos ? (
+              <div className="video-card-list">
+                {lesson.videos.map((video) => (
+                  <article key={video.embedUrl} className="video-embed-card">
+                    <h4>{video.title}</h4>
+                    <iframe
+                      src={video.embedUrl}
+                      title={video.title}
+                      className="lesson-video-frame"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    />
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="placeholder-panel placeholder-panel--video">{lesson.videoPlaceholder}</div>
+                <p className="support-text">{lesson.videoSupport}</p>
+              </>
+            )}
           </section>
         </div>
       );
