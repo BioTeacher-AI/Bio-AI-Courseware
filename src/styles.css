@@ -56,7 +56,8 @@ button {
 }
 
 .app-badge,
-.section-tag {
+.section-tag,
+.info-item-badge {
   display: inline-flex;
   align-items: center;
   padding: 6px 12px;
@@ -64,8 +65,17 @@ button {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.app-badge,
+.section-tag {
   color: #3153cb;
   background: rgba(49, 83, 203, 0.1);
+}
+
+.info-item-badge {
+  color: #2144ba;
+  background: rgba(75, 111, 248, 0.12);
 }
 
 .top-tab-bar {
@@ -119,7 +129,8 @@ button {
   backdrop-filter: blur(16px);
 }
 
-.page-stack {
+.page-stack,
+.lesson-detail-stack {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -141,7 +152,9 @@ button {
 .assessment-card,
 .placeholder-card,
 .lesson-sidebar,
-.lesson-content {
+.lesson-content,
+.detail-card,
+.banner-card {
   padding: 28px;
 }
 
@@ -161,7 +174,9 @@ button {
 .assessment-card h2,
 .lesson-sidebar h2,
 .lesson-content h2,
-.placeholder-card h3 {
+.placeholder-card h3,
+.detail-card h3,
+.banner-card h3 {
   margin: 14px 0 12px;
 }
 
@@ -169,7 +184,14 @@ button {
 .info-card p,
 .lesson-sidebar p,
 .lesson-content p,
-.body-text {
+.body-text,
+.detail-card p,
+.banner-card p,
+.support-text,
+.step-list li,
+.summary-card p,
+.info-item-card p,
+.question-card p {
   font-size: 16px;
   line-height: 1.7;
   color: #4a5670;
@@ -199,10 +221,7 @@ button {
   line-height: 1.7;
 }
 
-.section-heading--align-start {
-  align-items: flex-start;
-}
-
+.section-heading--align-start,
 .section-heading--stacked {
   align-items: flex-start;
 }
@@ -291,4 +310,96 @@ button {
 
 .placeholder-panel--medium {
   min-height: 260px;
+}
+
+.placeholder-panel--video {
+  min-height: 320px;
+}
+
+.info-list-grid,
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.question-grid--two,
+.question-grid--summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.info-item-card,
+.question-card,
+.summary-card {
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fbfcff 0%, #f3f6ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(98, 120, 181, 0.12);
+}
+
+.info-item-card--single {
+  background: linear-gradient(180deg, #f7f9ff 0%, #eef3ff 100%);
+}
+
+.info-item-card p,
+.question-card h4,
+.summary-card h4 {
+  margin: 14px 0 0;
+}
+
+.question-card h4,
+.summary-card h4,
+.lesson-section-block h4 {
+  font-size: 18px;
+  line-height: 1.55;
+  color: #223256;
+}
+
+.support-text {
+  margin: 12px 0 0;
+  color: #6a7690;
+}
+
+.banner-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: linear-gradient(135deg, rgba(75, 111, 248, 0.1), rgba(108, 145, 255, 0.08));
+}
+
+.banner-card p {
+  margin: 0;
+}
+
+.lesson-section-block + .lesson-section-block {
+  margin-top: 28px;
+}
+
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.material-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: #f5f8ff;
+  box-shadow: inset 0 0 0 1px rgba(98, 120, 181, 0.14);
+  color: #31415e;
+  font-weight: 600;
+}
+
+.step-list {
+  margin: 14px 0 0;
+  padding-left: 24px;
+}
+
+.step-list li + li {
+  margin-top: 12px;
 }
