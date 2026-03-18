@@ -1,7 +1,7 @@
 :root {
   font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
-  color: #1d2636;
-  background: #f4f7fb;
+  color: #182033;
+  background: #edf3fb;
   line-height: 1.5;
   font-weight: 400;
 }
@@ -14,8 +14,8 @@ body {
   margin: 0;
   min-width: 1280px;
   background:
-    radial-gradient(circle at top left, rgba(95, 127, 255, 0.12), transparent 28%),
-    linear-gradient(180deg, #f8fbff 0%, #eef3f9 100%);
+    radial-gradient(circle at top left, rgba(115, 151, 255, 0.18), transparent 26%),
+    linear-gradient(180deg, #f8fbff 0%, #edf3fb 100%);
 }
 
 button {
@@ -29,7 +29,7 @@ button {
 .app-shell {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 40px 32px 56px;
+  padding: 40px 32px 64px;
 }
 
 .app-header {
@@ -37,24 +37,25 @@ button {
   justify-content: space-between;
   align-items: flex-end;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .app-header h1 {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   font-size: 40px;
   line-height: 1.15;
 }
 
 .app-subtitle {
-  max-width: 520px;
+  max-width: 540px;
   margin: 0;
-  color: #5b667a;
+  color: #58647d;
   text-align: right;
+  font-size: 16px;
+  line-height: 1.7;
 }
 
 .app-badge,
-.eyebrow,
 .section-tag {
   display: inline-flex;
   align-items: center;
@@ -63,8 +64,8 @@ button {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #3655d6;
-  background: rgba(54, 85, 214, 0.1);
+  color: #3153cb;
+  background: rgba(49, 83, 203, 0.1);
 }
 
 .top-tab-bar {
@@ -76,9 +77,10 @@ button {
 
 .top-tab,
 .subtab-button,
-.primary-button {
+.primary-button,
+.shortcut-card {
   border: none;
-  border-radius: 18px;
+  border-radius: 20px;
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -89,36 +91,43 @@ button {
 
 .top-tab {
   padding: 16px 12px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #4b5870;
+  background: rgba(255, 255, 255, 0.78);
+  color: #4a5670;
   font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(127, 144, 170, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(115, 128, 159, 0.18);
 }
 
 .top-tab:hover,
 .subtab-button:hover,
-.primary-button:hover {
+.primary-button:hover,
+.shortcut-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(53, 71, 108, 0.12);
+  box-shadow: 0 14px 28px rgba(44, 59, 94, 0.12);
 }
 
 .top-tab.active {
-  background: linear-gradient(135deg, #4a6cf7, #6b8cff);
+  background: linear-gradient(135deg, #4b6ff8, #6c91ff);
   color: #ffffff;
-  box-shadow: 0 14px 28px rgba(74, 108, 247, 0.28);
+  box-shadow: 0 16px 30px rgba(75, 111, 248, 0.28);
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 28px;
-  box-shadow: 0 18px 36px rgba(34, 46, 78, 0.08);
+  box-shadow: 0 18px 36px rgba(34, 47, 79, 0.08);
   backdrop-filter: blur(16px);
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -128,45 +137,55 @@ button {
 
 .hero-card,
 .info-card,
-.content-card,
+.shortcuts-card,
+.assessment-card,
+.placeholder-card,
 .lesson-sidebar,
 .lesson-content {
   padding: 28px;
 }
 
 .hero-card {
-  min-height: 260px;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
 }
 
-.hero-card h1,
-.info-card h2,
-.content-card h2,
+.hero-copy {
+  max-width: 760px;
+}
+
+.hero-card h2,
+.info-card h3,
+.shortcuts-card h3,
+.assessment-card h2,
 .lesson-sidebar h2,
-.lesson-content h2 {
+.lesson-content h2,
+.placeholder-card h3 {
   margin: 14px 0 12px;
 }
 
-.hero-text,
+.hero-card p,
 .info-card p,
-.placeholder-text,
 .lesson-sidebar p,
-.section-description,
-.app-subtitle {
+.lesson-content p,
+.body-text {
   font-size: 16px;
   line-height: 1.7;
+  color: #4a5670;
 }
 
 .guide-list {
   margin: 18px 0 0;
   padding-left: 20px;
-  color: #4b5870;
+  color: #4a5670;
 }
 
 .guide-list li + li {
   margin-top: 10px;
 }
 
-.section-header {
+.section-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -174,34 +193,55 @@ button {
   margin-bottom: 20px;
 }
 
-.section-header--stacked {
+.section-heading p {
+  margin: 0;
+  color: #5a6780;
+  line-height: 1.7;
+}
+
+.section-heading--align-start {
   align-items: flex-start;
+}
+
+.section-heading--stacked {
+  align-items: flex-start;
+}
+
+.compact-gap {
+  margin-bottom: 16px;
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.shortcut-card {
+  padding: 20px;
+  text-align: left;
+  background: linear-gradient(180deg, #f7f9ff 0%, #eef3ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(93, 114, 171, 0.12);
+}
+
+.shortcut-card strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #223256;
+  font-size: 16px;
+}
+
+.shortcut-card span {
+  display: block;
+  color: #5b6780;
+  line-height: 1.6;
 }
 
 .primary-button {
   padding: 14px 24px;
-  background: linear-gradient(135deg, #4a6cf7, #6b8cff);
+  background: linear-gradient(135deg, #4b6ff8, #6c91ff);
   color: #ffffff;
   font-weight: 700;
-}
-
-.placeholder-panel {
-  display: grid;
-  place-items: center;
-  min-height: 220px;
-  border: 1.5px dashed rgba(86, 110, 158, 0.32);
-  border-radius: 24px;
-  background: linear-gradient(135deg, rgba(99, 122, 255, 0.08), rgba(99, 122, 255, 0.02));
-  color: #4d5a73;
-  font-weight: 600;
-}
-
-.placeholder-panel--large {
-  min-height: 320px;
-}
-
-.placeholder-panel--lesson {
-  min-height: 360px;
 }
 
 .lesson-layout {
@@ -222,12 +262,33 @@ button {
   padding: 16px 18px;
   text-align: left;
   background: #f3f6fd;
-  color: #4a5770;
+  color: #4a5670;
   font-weight: 700;
 }
 
 .subtab-button.active {
-  background: linear-gradient(135deg, rgba(74, 108, 247, 0.16), rgba(107, 140, 255, 0.24));
-  color: #2440b3;
-  box-shadow: inset 0 0 0 1px rgba(74, 108, 247, 0.15);
+  background: linear-gradient(135deg, rgba(75, 111, 248, 0.16), rgba(108, 145, 255, 0.24));
+  color: #2543b1;
+  box-shadow: inset 0 0 0 1px rgba(75, 111, 248, 0.14);
+}
+
+.placeholder-panel {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  padding: 24px;
+  border: 1.5px dashed rgba(86, 110, 158, 0.34);
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(99, 122, 255, 0.08), rgba(99, 122, 255, 0.03));
+  color: #4c5a74;
+  font-weight: 600;
+  text-align: center;
+}
+
+.placeholder-panel--lesson {
+  min-height: 360px;
+}
+
+.placeholder-panel--medium {
+  min-height: 260px;
 }
