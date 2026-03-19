@@ -485,3 +485,133 @@ button {
   border: none;
   border-radius: 20px;
 }
+
+.top-tab-bar--teacher {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.form-card,
+.nested-section-card,
+.ai-helper-card,
+.teacher-response-card {
+  padding: 28px;
+}
+
+.nested-section-card {
+  background: linear-gradient(180deg, #fcfdff 0%, #f5f8ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(98, 120, 181, 0.12);
+}
+
+.student-info-grid,
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #31415e;
+  font-weight: 700;
+}
+
+.text-input,
+.response-textarea,
+select.text-input {
+  width: 100%;
+  border: 1px solid rgba(115, 128, 159, 0.22);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #223256;
+  padding: 14px 16px;
+  font: inherit;
+  box-shadow: inset 0 1px 2px rgba(57, 76, 120, 0.04);
+}
+
+.response-textarea {
+  min-height: 140px;
+  resize: vertical;
+  margin-top: 14px;
+}
+
+.question-card--input {
+  padding-bottom: 18px;
+}
+
+.question-form-grid,
+.teacher-answer-grid,
+.teacher-response-list {
+  display: grid;
+  gap: 16px;
+}
+
+.save-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.status-message {
+  font-weight: 700;
+}
+
+.status-message--success {
+  color: #1f7a43;
+}
+
+.status-message--error {
+  color: #c53a3a;
+}
+
+.status-message--loading {
+  color: #3153cb;
+}
+
+.primary-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 14px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #4b6ff8, #6c91ff);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.teacher-action-cell {
+  display: flex;
+  align-items: flex-end;
+}
+
+.teacher-response-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.teacher-answer-item {
+  padding: 18px;
+  border-radius: 18px;
+  background: #f7f9ff;
+  box-shadow: inset 0 0 0 1px rgba(98, 120, 181, 0.1);
+}
+
+.teacher-answer-item strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #223256;
+}
+
+.teacher-answer-item p {
+  margin: 0;
+  color: #4a5670;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
