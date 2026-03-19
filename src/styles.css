@@ -669,7 +669,7 @@ select.text-input {
 }
 
 .metric-card,
-.bar-card {
+.pair-bars {
   padding: 22px;
   border-radius: 24px;
   background: linear-gradient(180deg, #fcfdff 0%, #f5f8ff 100%);
@@ -677,14 +677,14 @@ select.text-input {
 }
 
 .metric-card span,
-.bar-card span {
+.pair-bars span {
   display: block;
   color: #5b6780;
   margin-bottom: 10px;
 }
 
 .metric-card strong,
-.bar-card strong {
+.pair-bars strong {
   color: #223256;
   font-size: 26px;
 }
@@ -692,6 +692,10 @@ select.text-input {
 .simple-chart {
   display: grid;
   gap: 18px;
+}
+
+.simple-chart--compact {
+  gap: 14px;
 }
 
 .chart-row {
@@ -715,19 +719,32 @@ select.text-input {
   background: linear-gradient(135deg, #7d8fb6, #a0afcf);
 }
 
-.bars-grid {
+.compare-scroll {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(280px, 1fr);
+  grid-auto-columns: minmax(320px, 1fr);
   gap: 16px;
   overflow-x: auto;
   padding-bottom: 8px;
 }
 
-.bar-card h4 {
-  margin: 0 0 18px;
+.pair-bars {
+  display: grid;
+  gap: 18px;
+}
+
+.pair-bars__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pair-bars__head h4 {
+  margin: 0;
   color: #223256;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 17px;
 }
 
 .table-wrap {
@@ -774,34 +791,5 @@ select.text-input {
   border-radius: 999px;
   color: #fff;
   font-weight: 700;
-}
-
-.debug-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.debug-card {
-  padding: 22px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f5f8ff 100%);
-  box-shadow: inset 0 0 0 1px rgba(98, 120, 181, 0.12);
-}
-
-.debug-card h4 {
-  margin: 0 0 10px;
-  color: #223256;
-}
-
-.debug-pre {
-  margin: 12px 0 0;
-  padding: 16px;
-  border-radius: 18px;
-  background: #f1f5ff;
-  color: #31415e;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 13px;
-  line-height: 1.6;
+  white-space: nowrap;
 }

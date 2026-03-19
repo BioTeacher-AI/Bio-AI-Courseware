@@ -77,7 +77,9 @@ const formPanels = {
   }
 };
 
-const increaseBetterQuestions = [
+const EMPTY_DATASET_PAYLOAD = { dataset: '', sheetName: '', count: 0, data: [] };
+
+const INCREASE_IS_BETTER_QUESTIONS = [
   '심장은 우리 몸에 필요한 영양소, 산소를 온몸으로 운반한다.',
   '소화기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.',
   "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 '폐'이다.",
@@ -93,80 +95,106 @@ function normalizeQuestionName(value) {
 
 function isIncreaseBetterQuestion(questionName) {
   const normalized = normalizeQuestionName(questionName);
-  return increaseBetterQuestions.some((q) => normalizeQuestionName(q) === normalized);
-}
-
-function parseDate(value) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return INCREASE_IS_BETTER_QUESTIONS.some((question) => normalizeQuestionName(question) === normalized);
 }
 
 function parseScore(value) {
-  if (value == null) return null;
-  const match = String(value).match(/([0-5](?:\.0+)?)/);
-  return match ? Number(match[1]) : null;
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const match = String(value).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function parseDate(value) {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const normalized = raw
+    .replace(/\.\s*/g, '-')
+    .replace(/\//g, '-')
+    .replace(/\s+/g, ' ');
+
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDate(value) {
+  const date = parseDate(value);
+  return date ? date.toLocaleString('ko-KR') : '-';
 }
 
 function extractRows(payload) {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.rows)) return payload.rows;
   if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.rows)) return payload.rows;
   if (Array.isArray(payload.items)) return payload.items;
   return [];
 }
 
-function findNameColumn(row) {
-  return Object.keys(row || {}).find((key) => key.includes('이름')) || null;
+function normalizePayload(payload, dataset) {
+  const data = extractRows(payload);
+  return {
+    dataset: payload?.dataset || dataset,
+    sheetName: payload?.sheetName || payload?.sheet || '',
+    count: typeof payload?.count === 'number' ? payload.count : data.length,
+    data
+  };
 }
 
-function findStudentIdColumn(row) {
-  return Object.keys(row || {}).find((key) => key.includes('학번')) || null;
+function findColumn(row, keywords = []) {
+  const keys = Object.keys(row || {});
+  return (
+    keys.find((key) => keywords.some((keyword) => normalizeQuestionName(key).includes(normalizeQuestionName(keyword)))) ||
+    null
+  );
 }
 
-function findTimestampColumn(row) {
-  return Object.keys(row || {}).find((key) => key.includes('타임스탬프')) || null;
+function pickLatestMatch(rows, nameCol, studentCol, inputName, inputStudentId, timestampCol = '타임스탬프') {
+  const matches = rows.filter((row) => {
+    const rowName = String(row?.[nameCol] ?? '').trim();
+    const rowStudentId = String(row?.[studentCol] ?? '').trim();
+    return rowName === inputName && rowStudentId === inputStudentId;
+  });
+
+  if (!matches.length) return null;
+
+  return [...matches].sort((a, b) => {
+    const ad = parseDate(a?.[timestampCol] ?? a?.['타임스탬프']);
+    const bd = parseDate(b?.[timestampCol] ?? b?.['타임스탬프']);
+    if (!ad && !bd) return 0;
+    if (!ad) return 1;
+    if (!bd) return -1;
+    return bd - ad;
+  })[0];
 }
 
-function findLatestMatchingRow(rows, name, studentId, nameCol, idCol, timeCol) {
-  return (rows || [])
-    .filter(
-      (row) =>
-        String(row?.[nameCol] || '').trim() === name.trim() &&
-        String(row?.[idCol] || '').trim() === studentId.trim()
-    )
-    .sort((a, b) => {
-      const aDate = parseDate(a?.[timeCol]);
-      const bDate = parseDate(b?.[timeCol]);
-      return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
-    })[0] || null;
+function average(values) {
+  if (!values.length) return 0;
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2));
 }
 
 function classifyChange(questionName, preScore, postScore) {
-  if (preScore == null || postScore == null) return '동일';
-
-  const increaseBetter = isIncreaseBetterQuestion(questionName);
-
-  if (increaseBetter) {
-    if (postScore > preScore) return '개선';
-    if (postScore < preScore) return '악화';
-    return '동일';
-  }
-
-  if (postScore < preScore) return '개선';
-  if (postScore > preScore) return '악화';
-  return '동일';
+  if (preScore === null || postScore === null) return '동일';
+  if (postScore === preScore) return '동일';
+  const increaseIsBetter = isIncreaseBetterQuestion(questionName);
+  const improved = increaseIsBetter ? postScore > preScore : postScore < preScore;
+  return improved ? '개선' : '심화';
 }
 
-function getChangeTone(change) {
+function getJudgementTone(change) {
   if (change === '개선') return 'tone-up';
-  if (change === '악화') return 'tone-down';
+  if (change === '심화') return 'tone-down';
   return 'tone-neutral';
 }
 
-function formatDateTime(value) {
-  const date = parseDate(value);
-  return date ? date.toLocaleString('ko-KR') : '-';
+function getDirectionScore(questionName, preScore, postScore) {
+  if (preScore === null || postScore === null) return 0;
+  const delta = Number((postScore - preScore).toFixed(2));
+  return isIncreaseBetterQuestion(questionName) ? delta : -delta;
 }
 
 const detailedLessonData = {
@@ -636,8 +664,8 @@ function App() {
   const [saveStatus, setSaveStatus] = useState({});
   const [searchName, setSearchName] = useState('');
   const [searchStudentId, setSearchStudentId] = useState('');
-  const [prePayload, setPrePayload] = useState(null);
-  const [postPayload, setPostPayload] = useState(null);
+  const [prePayload, setPrePayload] = useState(EMPTY_DATASET_PAYLOAD);
+  const [postPayload, setPostPayload] = useState(EMPTY_DATASET_PAYLOAD);
   const [compareResult, setCompareResult] = useState(null);
   const [compareError, setCompareError] = useState('');
   const [compareLoading, setCompareLoading] = useState(false);
@@ -799,10 +827,10 @@ function App() {
   };
 
   const runComparison = async () => {
-    const trimmedName = searchName.trim();
-    const trimmedStudentId = searchStudentId.trim();
+    const cleanName = searchName.trim();
+    const cleanStudentId = searchStudentId.trim();
 
-    if (!trimmedName || !trimmedStudentId) {
+    if (!cleanName || !cleanStudentId) {
       setCompareError('이름과 학번을 모두 입력해 주세요.');
       setCompareResult(null);
       return;
@@ -812,106 +840,117 @@ function App() {
     setCompareError('');
 
     try {
-      const [preRes, postRes] = await Promise.all([
+      const [preResponse, postResponse] = await Promise.all([
         fetch('/.netlify/functions/proxy?dataset=pre', { cache: 'no-store' }),
         fetch('/.netlify/functions/proxy?dataset=post', { cache: 'no-store' })
       ]);
 
-      const [preJson, postJson] = await Promise.all([preRes.json(), postRes.json()]);
-      setPrePayload(preJson);
-      setPostPayload(postJson);
+      const [preJson, postJson] = await Promise.all([preResponse.json(), postResponse.json()]);
 
-      if (!preRes.ok || !postRes.ok) {
+      if (!preResponse.ok || !postResponse.ok) {
         throw new Error('사전 또는 사후 검사 데이터를 불러오지 못했습니다.');
       }
 
-      const preRows = extractRows(preJson);
-      const postRows = extractRows(postJson);
+      const nextPrePayload = normalizePayload(preJson, 'pre');
+      const nextPostPayload = normalizePayload(postJson, 'post');
+      setPrePayload(nextPrePayload);
+      setPostPayload(nextPostPayload);
+
+      const preRows = nextPrePayload.data;
+      const postRows = nextPostPayload.data;
       const preSampleRow = preRows[0] || {};
       const postSampleRow = postRows[0] || {};
 
-      const preNameCol = findNameColumn(preSampleRow);
-      const preIdCol = findStudentIdColumn(preSampleRow);
-      const preTimeCol = findTimestampColumn(preSampleRow);
-      const postNameCol = findNameColumn(postSampleRow);
-      const postIdCol = findStudentIdColumn(postSampleRow);
-      const postTimeCol = findTimestampColumn(postSampleRow);
+      const preNameCol = findColumn(preSampleRow, ['이름']);
+      const preStudentCol = findColumn(preSampleRow, ['학번']);
+      const preTimestampCol = findColumn(preSampleRow, ['타임스탬프', '응답 시간', '제출 시간']);
+      const postNameCol = findColumn(postSampleRow, ['이름']);
+      const postStudentCol = findColumn(postSampleRow, ['학번']);
+      const postTimestampCol = findColumn(postSampleRow, ['타임스탬프', '응답 시간', '제출 시간']);
 
-      if (!preNameCol || !preIdCol || !preTimeCol || !postNameCol || !postIdCol || !postTimeCol) {
-        throw new Error('사전/사후 데이터에서 이름/학번/타임스탬프 컬럼을 자동으로 찾지 못했습니다.');
+      if (!preNameCol || !preStudentCol || !preTimestampCol || !postNameCol || !postStudentCol || !postTimestampCol) {
+        throw new Error('사전/사후 데이터에서 이름, 학번, 타임스탬프 컬럼을 찾지 못했습니다.');
       }
 
-      const latestPre = findLatestMatchingRow(preRows, trimmedName, trimmedStudentId, preNameCol, preIdCol, preTimeCol);
-      const latestPost = findLatestMatchingRow(postRows, trimmedName, trimmedStudentId, postNameCol, postIdCol, postTimeCol);
+      const matchedPre = pickLatestMatch(preRows, preNameCol, preStudentCol, cleanName, cleanStudentId, preTimestampCol);
+      const matchedPost = pickLatestMatch(postRows, postNameCol, postStudentCol, cleanName, cleanStudentId, postTimestampCol);
 
-      if (!latestPre || !latestPost) {
+      if (!matchedPre || !matchedPost) {
         throw new Error('이름과 학번이 모두 일치하는 사전/사후 검사 응답을 찾지 못했습니다.');
       }
 
-      const excluded = new Set([preNameCol, preIdCol, preTimeCol, postNameCol, postIdCol, postTimeCol]);
-      const sharedQuestionKeys = Object.keys(latestPre).filter(
-        (key) =>
-          !excluded.has(key) &&
-          Object.prototype.hasOwnProperty.call(latestPost, key) &&
-          (parseScore(latestPre[key]) != null || parseScore(latestPost[key]) != null)
+      const excludedColumns = new Set([
+        preNameCol,
+        preStudentCol,
+        preTimestampCol,
+        postNameCol,
+        postStudentCol,
+        postTimestampCol
+      ]);
+
+      const postQuestionMap = new Map(
+        Object.keys(matchedPost).map((key) => [normalizeQuestionName(key), { key, question: key }])
       );
 
-      if (!sharedQuestionKeys.length) {
+      const items = Object.keys(matchedPre)
+        .filter((key) => !excludedColumns.has(key))
+        .map((preKey, index) => {
+          const normalizedQuestion = normalizeQuestionName(preKey);
+          const postQuestion = postQuestionMap.get(normalizedQuestion);
+          if (!postQuestion) return null;
+
+          const questionName = preKey;
+          const preScore = parseScore(matchedPre[preKey]);
+          const postScore = parseScore(matchedPost[postQuestion.key]);
+
+          if (preScore === null && postScore === null) return null;
+
+          const delta =
+            preScore === null || postScore === null ? null : Number((postScore - preScore).toFixed(2));
+          const judgement = classifyChange(questionName, preScore, postScore);
+
+          return {
+            index,
+            question: questionName,
+            preScore,
+            postScore,
+            delta,
+            judgement,
+            directionScore: getDirectionScore(questionName, preScore, postScore)
+          };
+        })
+        .filter(Boolean);
+
+      if (!items.length) {
         throw new Error('비교 가능한 점수 문항을 찾지 못했습니다.');
       }
 
-      const items = sharedQuestionKeys.map((question, index) => {
-        const preScore = parseScore(latestPre[question]);
-        const postScore = parseScore(latestPost[question]);
-        const delta =
-          preScore == null || postScore == null ? null : Number((postScore - preScore).toFixed(2));
-        return {
-          index,
-          question,
-          preScore,
-          postScore,
-          delta,
-          change: classifyChange(question, preScore, postScore)
-        };
-      });
-
-      const validScores = items.filter((item) => item.preScore != null && item.postScore != null);
-      const preAverage = validScores.length
-        ? Number((validScores.reduce((sum, item) => sum + item.preScore, 0) / validScores.length).toFixed(2))
-        : 0;
-      const postAverage = validScores.length
-        ? Number((validScores.reduce((sum, item) => sum + item.postScore, 0) / validScores.length).toFixed(2))
-        : 0;
-      const deltaAverage = Number((postAverage - preAverage).toFixed(2));
-      const improvedCount = items.filter((item) => item.change === '개선').length;
-      const sameCount = items.filter((item) => item.change === '동일').length;
-      const worsenedCount = items.filter((item) => item.change === '악화').length;
+      const validPreScores = items.map((item) => item.preScore).filter((score) => score !== null);
+      const validPostScores = items.map((item) => item.postScore).filter((score) => score !== null);
+      const preAvg = average(validPreScores);
+      const postAvg = average(validPostScores);
+      const deltaAvg = Number((postAvg - preAvg).toFixed(2));
+      const improved = items.filter((item) => item.judgement === '개선').length;
+      const same = items.filter((item) => item.judgement === '동일').length;
+      const deepened = items.filter((item) => item.judgement === '심화').length;
 
       setCompareResult({
         student: {
-          name: trimmedName,
-          studentId: trimmedStudentId,
-          preTimestamp: latestPre[preTimeCol],
-          postTimestamp: latestPost[postTimeCol]
+          name: cleanName,
+          studentId: cleanStudentId,
+          preTimestamp: matchedPre[preTimestampCol],
+          postTimestamp: matchedPost[postTimestampCol]
         },
         summary: {
           questionCount: items.length,
-          preAverage,
-          postAverage,
-          deltaAverage,
-          improvedCount,
-          sameCount,
-          worsenedCount
+          preAvg,
+          postAvg,
+          deltaAvg,
+          improved,
+          same,
+          deepened
         },
-        items,
-        preDebug: {
-          timestamp: latestPre[preTimeCol],
-          row: latestPre
-        },
-        postDebug: {
-          timestamp: latestPost[postTimeCol],
-          row: latestPost
-        }
+        items
       });
       setSortMode('original');
     } catch (error) {
@@ -925,12 +964,15 @@ function App() {
   const sortedCompareItems = useMemo(() => {
     if (!compareResult) return [];
     const base = [...compareResult.items];
+
     if (sortMode === 'improved') {
-      return base.sort((a, b) => (b.delta ?? -Infinity) - (a.delta ?? -Infinity));
+      return base.sort((a, b) => (b.directionScore - a.directionScore) || (a.index - b.index));
     }
+
     if (sortMode === 'worsened') {
-      return base.sort((a, b) => (a.delta ?? Infinity) - (b.delta ?? Infinity));
+      return base.sort((a, b) => (a.directionScore - b.directionScore) || (a.index - b.index));
     }
+
     return base.sort((a, b) => a.index - b.index);
   }, [compareResult, sortMode]);
 
@@ -1039,12 +1081,20 @@ function App() {
     const metricCards = compareResult
       ? [
           { label: '분석 문항 수', value: `${compareResult.summary.questionCount}개` },
-          { label: '사전 평균', value: compareResult.summary.preAverage.toFixed(2) },
-          { label: '사후 평균', value: compareResult.summary.postAverage.toFixed(2) },
-          { label: '평균 변화량', value: `${compareResult.summary.deltaAverage >= 0 ? '+' : ''}${compareResult.summary.deltaAverage.toFixed(2)}` },
-          { label: '개선 문항 수', value: `${compareResult.summary.improvedCount}개` },
-          { label: '동일 문항 수', value: `${compareResult.summary.sameCount}개` },
-          { label: '악화 문항 수', value: `${compareResult.summary.worsenedCount}개` }
+          { label: '사전 평균', value: compareResult.summary.preAvg.toFixed(2) },
+          { label: '사후 평균', value: compareResult.summary.postAvg.toFixed(2) },
+          { label: '평균 변화량', value: `${compareResult.summary.deltaAvg >= 0 ? '+' : ''}${compareResult.summary.deltaAvg.toFixed(2)}` },
+          { label: '개선 문항 수', value: `${compareResult.summary.improved}개` },
+          { label: '동일 문항 수', value: `${compareResult.summary.same}개` },
+          { label: '심화 문항 수', value: `${compareResult.summary.deepened}개` }
+        ]
+      : [];
+
+    const distributionBars = compareResult
+      ? [
+          { label: '개선', value: compareResult.summary.improved, className: 'tone-up' },
+          { label: '동일', value: compareResult.summary.same, className: 'tone-neutral' },
+          { label: '심화', value: compareResult.summary.deepened, className: 'tone-down' }
         ]
       : [];
 
@@ -1117,33 +1167,11 @@ function App() {
                 </article>
                 <article className="metric-card">
                   <span>사전 응답 시각</span>
-                  <strong>{formatDateTime(compareResult.student.preTimestamp)}</strong>
+                  <strong>{formatDate(compareResult.student.preTimestamp)}</strong>
                 </article>
                 <article className="metric-card">
                   <span>사후 응답 시각</span>
-                  <strong>{formatDateTime(compareResult.student.postTimestamp)}</strong>
-                </article>
-              </div>
-            </section>
-
-            <section className="card detail-card">
-              <div className="section-heading section-heading--stacked compact-gap">
-                <div>
-                  <span className="section-tag">임시 디버그</span>
-                  <h3>사전/사후 매칭 row 확인</h3>
-                </div>
-                <p>사전/사후가 실제로 서로 다른 row인지 화면에서 바로 확인할 수 있도록 디버그 정보를 표시합니다.</p>
-              </div>
-              <div className="debug-grid">
-                <article className="debug-card">
-                  <h4>Pre Debug</h4>
-                  <p className="support-text">timestamp: {formatDateTime(compareResult.preDebug?.timestamp)}</p>
-                  <pre className="debug-pre">{JSON.stringify(compareResult.preDebug?.row || {}, null, 2)}</pre>
-                </article>
-                <article className="debug-card">
-                  <h4>Post Debug</h4>
-                  <p className="support-text">timestamp: {formatDateTime(compareResult.postDebug?.timestamp)}</p>
-                  <pre className="debug-pre">{JSON.stringify(compareResult.postDebug?.row || {}, null, 2)}</pre>
+                  <strong>{formatDate(compareResult.student.postTimestamp)}</strong>
                 </article>
               </div>
             </section>
@@ -1154,6 +1182,7 @@ function App() {
                   <span className="section-tag">요약 카드</span>
                   <h3>결과 요약</h3>
                 </div>
+                <p>사전/사후 평균, 변화량, 개선·동일·심화 문항 수를 한 번에 확인할 수 있습니다.</p>
               </div>
               <div className="metrics-grid">
                 {metricCards.map((metric) => (
@@ -1174,8 +1203,8 @@ function App() {
               </div>
               <div className="simple-chart">
                 {[
-                  { label: '사전 평균', value: compareResult.summary.preAverage, className: 'tone-neutral' },
-                  { label: '사후 평균', value: compareResult.summary.postAverage, className: 'tone-up' }
+                  { label: '사전 평균', value: compareResult.summary.preAvg, className: 'tone-neutral' },
+                  { label: '사후 평균', value: compareResult.summary.postAvg, className: 'tone-up' }
                 ].map((bar) => (
                   <div key={bar.label} className="chart-row">
                     <span>{bar.label}</span>
@@ -1194,24 +1223,30 @@ function App() {
                   <span className="section-tag">그래프 2</span>
                   <h3>문항별 사전/사후 비교</h3>
                 </div>
+                <p>각 문항의 사전 점수와 사후 점수를 나란히 비교합니다.</p>
               </div>
-              <div className="bars-grid">
-                {compareResult.items.map((item) => (
-                  <article key={item.question} className="bar-card">
-                    <h4>{item.question}</h4>
-                    <div className="chart-row">
-                      <span>사전</span>
-                      <div className="chart-track">
-                        <div className="chart-bar tone-neutral" style={{ width: `${((item.preScore || 0) / 5) * 100}%` }} />
-                      </div>
-                      <strong>{item.preScore ?? '-'}</strong>
+              <div className="compare-scroll">
+                {sortedCompareItems.map((item) => (
+                  <article key={item.question} className="pair-bars">
+                    <div className="pair-bars__head">
+                      <h4>{item.question}</h4>
+                      <span className={`tone-pill ${getJudgementTone(item.judgement)}`}>{item.judgement}</span>
                     </div>
-                    <div className="chart-row">
-                      <span>사후</span>
-                      <div className="chart-track">
-                        <div className="chart-bar tone-up" style={{ width: `${((item.postScore || 0) / 5) * 100}%` }} />
+                    <div className="simple-chart simple-chart--compact">
+                      <div className="chart-row">
+                        <span>사전</span>
+                        <div className="chart-track">
+                          <div className="chart-bar tone-neutral" style={{ width: `${((item.preScore || 0) / 5) * 100}%` }} />
+                        </div>
+                        <strong>{item.preScore ?? '-'}</strong>
                       </div>
-                      <strong>{item.postScore ?? '-'}</strong>
+                      <div className="chart-row">
+                        <span>사후</span>
+                        <div className="chart-track">
+                          <div className={`chart-bar ${getJudgementTone(item.judgement)}`} style={{ width: `${((item.postScore || 0) / 5) * 100}%` }} />
+                        </div>
+                        <strong>{item.postScore ?? '-'}</strong>
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -1222,15 +1257,11 @@ function App() {
               <div className="section-heading section-heading--stacked compact-gap">
                 <div>
                   <span className="section-tag">그래프 3</span>
-                  <h3>개선 / 동일 / 악화 분포</h3>
+                  <h3>개선/동일/심화 분포</h3>
                 </div>
               </div>
               <div className="simple-chart">
-                {[
-                  { label: '개선', value: compareResult.summary.improvedCount, className: 'tone-up' },
-                  { label: '동일', value: compareResult.summary.sameCount, className: 'tone-neutral' },
-                  { label: '악화', value: compareResult.summary.worsenedCount, className: 'tone-down' }
-                ].map((bar) => (
+                {distributionBars.map((bar) => (
                   <div key={bar.label} className="chart-row">
                     <span>{bar.label}</span>
                     <div className="chart-track">
@@ -1256,7 +1287,7 @@ function App() {
                   <select className="text-input" value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
                     <option value="original">원래 순서</option>
                     <option value="improved">개선 큰 순</option>
-                    <option value="worsened">악화 큰 순</option>
+                    <option value="worsened">심화 큰 순</option>
                   </select>
                 </label>
               </div>
@@ -1279,7 +1310,7 @@ function App() {
                         <td>{item.postScore ?? '-'}</td>
                         <td>{item.delta == null ? '-' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(2)}`}</td>
                         <td>
-                          <span className={`tone-pill ${getChangeTone(item.change)}`}>{item.change}</span>
+                          <span className={`tone-pill ${getJudgementTone(item.judgement)}`}>{item.judgement}</span>
                         </td>
                       </tr>
                     ))}
