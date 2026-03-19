@@ -1,20 +1,24 @@
+const PRE_URL =
+  process.env.GFORM_JSON_URL_PRE ||
+  'https://script.google.com/macros/s/AKfycbwcIXi2O4vJARKHyRJNh5HA2BQsJ5nC4PqHviMI-1GRXTkjZBEELCN1uoCUrEL0qFqCKQ/exec';
+
+const POST_URL =
+  process.env.GFORM_JSON_URL_POST ||
+  'https://script.google.com/macros/s/AKfycbwGWHDZ3l1pufPPCDixCmighF6tmMlC31-Oa_hHlp9sFwMEEFr9fakdhh8KoL986_4/exec';
+
 const proxyRequest = async (request) => {
   const urlObj = new URL(request.url);
-  const dataset = urlObj.searchParams.get('dataset') || 'pre';
+  const dataset = urlObj.searchParams.get('dataset');
 
-  const PRE_URL =
-    process.env.GFORM_JSON_URL_PRE ||
-    'https://script.google.com/macros/s/AKfycbwcIXi2O4vJARKHyRJNh5HA2BQsJ5nC4PqHviMI-1GRXTkjZBEELCN1uoCUrEL0qFqCKQ/exec';
+  let targetUrl = '';
 
-  const POST_URL =
-    process.env.GFORM_JSON_URL_POST ||
-    'https://script.google.com/macros/s/AKfycbwGWHDZ3l1pufPPCDixCmighF6tmMlC31-Oa_hHlp9sFwMEEFr9fakdhh8KoL986_4/exec';
-
-  const targetUrl = dataset === 'post' ? POST_URL : PRE_URL;
-
-  if (!targetUrl) {
-    return new Response(JSON.stringify({ error: `Missing API URL for dataset: ${dataset}` }), {
-      status: 500,
+  if (dataset === 'pre') {
+    targetUrl = PRE_URL;
+  } else if (dataset === 'post') {
+    targetUrl = POST_URL;
+  } else {
+    return new Response(JSON.stringify({ error: 'dataset must be pre or post' }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
