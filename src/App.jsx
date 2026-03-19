@@ -1673,29 +1673,31 @@ function App() {
                         {isLesson2IcebreakDrawing && (
                           <div className="draw-card">
                             <p className="support-text">아래 순환계 모식도 위에 혈액의 이동 방향을 화살표로 그려 보세요.</p>
-                            <div className="draw-container diagram-box">
-                              <img
-                                ref={lesson2ImageRef}
-                                src="/circulation_diagram_clean.png"
-                                alt="순환계 모식도"
-                                className="diagram-image"
-                                style={{
-                                  maxWidth: '520px',
-                                  width: '100%',
-                                  height: 'auto'
-                                }}
-                                onLoad={syncLesson2CanvasSize}
-                              />
-                              <canvas
-                                ref={lesson2CanvasRef}
-                                className="draw-canvas"
-                                onMouseDown={handleLesson2CanvasMouseDown}
-                                onMouseUp={handleLesson2CanvasMouseUp}
-                                onMouseLeave={() => {
-                                  setLesson2IsDrawing(false);
-                                  setLesson2StartPoint(null);
-                                }}
-                              />
+                            <div className="diagram-box" style={{ width: '100%', textAlign: 'center' }}>
+                              <div className="draw-container">
+                                <img
+                                  ref={lesson2ImageRef}
+                                  src="/circulation_diagram_clean.png"
+                                  alt="순환계 모식도"
+                                  className="diagram-image"
+                                  style={{
+                                    width: '100%',
+                                    maxWidth: '1100px',
+                                    height: 'auto'
+                                  }}
+                                  onLoad={syncLesson2CanvasSize}
+                                />
+                                <canvas
+                                  ref={lesson2CanvasRef}
+                                  className="draw-canvas"
+                                  onMouseDown={handleLesson2CanvasMouseDown}
+                                  onMouseUp={handleLesson2CanvasMouseUp}
+                                  onMouseLeave={() => {
+                                    setLesson2IsDrawing(false);
+                                    setLesson2StartPoint(null);
+                                  }}
+                                />
+                              </div>
                             </div>
                             <div className="draw-toolbar">
                               <button type="button" className="primary-button" onClick={resetLesson2Drawing}>
@@ -1981,10 +1983,6 @@ function App() {
     if (activeSubTab === 'experiment') {
       return (
         <div className="lesson-detail-stack">
-          <section className="card banner-card">
-            <span className="section-tag">안내</span>
-            <p>{lesson.experimentBanner}</p>
-          </section>
           <section className="card detail-card">
             <div className="section-heading section-heading--stacked compact-gap">
               <div>
