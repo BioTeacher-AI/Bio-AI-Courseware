@@ -45,10 +45,10 @@ const lessonSubTabsMap = {
   ]
 };
 
-const gptLinks = {
-  lesson1: '#',
-  lesson2: '#',
-  lesson3: '#'
+const GPT_LINKS = {
+  lesson1: 'https://chatgpt.com/g/g-699e765567a48191b4ecb5464b129c6e-gigwangyeyi-tonghabjeog-jagyong-1casi-sohwagye-ai-bojo-gyosa',
+  lesson2: 'https://chatgpt.com/g/g-699e8d3707c88191966a6b874d9a9680-gigwangyeyi-tonghabjeog-jagyong-2casi-sunhwangyewa-hoheubgye-ai-bojo-gyosa',
+  lesson3: 'https://chatgpt.com/g/g-699e998e40b8819198ca1669c3f11c05-gigwangyeyi-tonghabjeog-jagyong-3casi-baeseolgye-ai-bojo-gyosa'
 };
 
 const teacherSectionOptions = [
@@ -1487,6 +1487,122 @@ function App() {
     );
   };
 
+
+  const renderAITutor = (lessonKey) => {
+    const labels = {
+      lesson1: '1차시 AI 보조교사 실행하기',
+      lesson2: '2차시 AI 보조교사 실행하기',
+      lesson3: '3차시 AI 보조교사 실행하기'
+    };
+
+    const launchTutor = () => {
+      const targetUrl = GPT_LINKS[lessonKey];
+      if (!targetUrl || typeof window === 'undefined') return;
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    return (
+      <div className="lesson-detail-stack ai-guide-layout">
+        <section className="card detail-card ai-guide-card">
+          <div className="section-heading section-heading--stacked compact-gap">
+            <div>
+              <span className="section-tag">AI 보조교사</span>
+              <h3>AI 보조교사와 함께 학습하기</h3>
+            </div>
+          </div>
+          <p className="body-text">
+            이 활동에서는 AI 보조교사와 대화하면서 실험 전 예상 활동, 실험 관찰, 실험 후 설명 활동을 진행합니다.
+          </p>
+          <p className="support-text ai-note">
+            AI 보조교사는 정답을 바로 알려주기보다 여러분의 생각을 말로 표현하고 관찰 결과를 바탕으로 설명하도록 돕습니다.
+          </p>
+        </section>
+
+        <section className="card detail-card ai-guide-card ai-launch-card">
+          <div className="section-heading section-heading--stacked compact-gap">
+            <div>
+              <span className="section-tag">GPT 실행</span>
+              <h3>{labels[lessonKey]}</h3>
+            </div>
+          </div>
+          <button type="button" className="ai-launch-button" onClick={launchTutor}>
+            {labels[lessonKey]}
+          </button>
+          <p className="support-text ai-note">새 창에서 GPT가 열립니다. 활동 후 다시 코스웨어로 돌아와 답안을 정리하세요.</p>
+        </section>
+
+        <section className="card detail-card ai-guide-card">
+          <div className="section-heading section-heading--stacked compact-gap">
+            <div>
+              <span className="section-tag">활용 가이드</span>
+              <h3>AI 보조교사 활용 가이드</h3>
+            </div>
+          </div>
+
+          <section className="ai-guide-section">
+            <h4>1. 활동 진행 방법</h4>
+            <div className="ai-guide-item">
+              <h5>① 실험 전 예상 활동</h5>
+              <ul className="note-list note-list--spacious">
+                <li>AI 보조교사가 활동지에 제시된 실험 전 질문을 하나씩 제시합니다.</li>
+                <li>각 질문에 대하여 자신의 생각을 자유롭게 작성하면 됩니다.</li>
+                <li>이 단계에서는 정답을 맞추는 것이 목적이 아니므로, 자신의 생각을 솔직하게 적는 것이 중요합니다.</li>
+              </ul>
+            </div>
+            <div className="ai-guide-item">
+              <h5>② 관찰 활동</h5>
+              <ul className="note-list note-list--spacious">
+                <li>여러분이 실제 실험을 수행하는 단계입니다.</li>
+                <li>실험을 마친 후, AI 보조교사에게 다음과 같이 입력합니다.</li>
+              </ul>
+              <div className="ai-guide-callout">실험이 끝났습니다.</div>
+              <p className="support-text">이후 AI 보조교사는 활동지에 제시된 실험 후 질문을 제시합니다.</p>
+            </div>
+            <div className="ai-guide-item">
+              <h5>③ 실험 후 설명 활동</h5>
+              <p className="support-text">여러분이 관찰한 실험 결과를 바탕으로 AI 보조교사와 대화를 하면서 다음을 정리합니다.</p>
+              <ul className="note-list note-list--spacious">
+                <li>관찰한 결과는 무엇인지</li>
+                <li>처음 예측과 어떤 점이 같거나 다른지</li>
+                <li>그 이유를 과학적으로 어떻게 설명할 수 있는지</li>
+              </ul>
+              <p className="support-text">AI 보조교사는 여러분이 스스로 생각할 수 있도록 추가 질문을 통해 사고를 확장시켜 줍니다.</p>
+            </div>
+          </section>
+
+          <section className="ai-guide-section">
+            <h4>2. AI 보조교사와 대화할 때 주의할 점</h4>
+            <div className="ai-guide-item">
+              <h5>① 질문에는 가능한 구체적으로 답해주세요.</h5>
+              <ul className="note-list note-list--spacious">
+                <li>너무 짧게 적으면 AI 보조교사가 여러분의 생각을 이해하기 어렵습니다.</li>
+                <li>한 문장 이상으로, 이유나 근거와 함께 자세하게 설명하는 것이 좋습니다.</li>
+              </ul>
+            </div>
+            <div className="ai-guide-item">
+              <h5>② 실험 전 예측이 틀려도 괜찮습니다.</h5>
+              <ul className="note-list note-list--spacious">
+                <li>이 활동은 정답을 맞추는 것이 목적이 아니라 여러분의 생각을 표현하는 것이 중요한 활동입니다.</li>
+                <li>처음 예측이 실제 결과와 달라도 괜찮습니다.</li>
+              </ul>
+            </div>
+            <div className="ai-guide-item">
+              <h5>③ AI 보조교사는 여러분에게 정답을 바로 알려주지 않아요.</h5>
+              <ul className="note-list note-list--spacious">
+                <li>대신 여러분이 스스로 생각하도록 추가 질문을 할 수 있습니다.</li>
+                <li>이것은 생각을 더 깊게 해보기 위한 과정입니다.</li>
+              </ul>
+            </div>
+            <div className="ai-guide-item">
+              <h5>④ 한 번에 하나의 질문만 제시됩니다.</h5>
+              <p className="support-text">현재 질문에 답한 후 다음 질문으로 진행하세요.</p>
+            </div>
+          </section>
+        </section>
+      </div>
+    );
+  };
+
   const renderDetailedLesson = (lessonKey) => {
     const lesson = detailedLessonData[lessonKey];
 
@@ -1634,23 +1750,7 @@ function App() {
     }
 
     if (activeSubTab === 'ai') {
-      return (
-        <div className="lesson-detail-stack">
-          <section className="card detail-card ai-helper-card">
-            <div className="section-heading section-heading--stacked compact-gap">
-              <div>
-                <span className="section-tag">AI 보조교사</span>
-                <h3>{lesson.aiTitle}</h3>
-              </div>
-              <p>{lesson.aiDescription}</p>
-            </div>
-            <p className="body-text">예상하기와 설명하기 단계에서 이 AI 보조교사를 활용할 수 있습니다.</p>
-            <a href={gptLinks[lessonKey]} target="_blank" rel="noreferrer" className="primary-link-button">
-              AI 보조교사 열기
-            </a>
-          </section>
-        </div>
-      );
+      return renderAITutor(lessonKey);
     }
 
     return null;
