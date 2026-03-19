@@ -9,8 +9,7 @@ const topTabs = [
   { id: 'lesson2', label: '2차시' },
   { id: 'lesson3', label: '3차시' },
   { id: 'posttest', label: '사후 검사' },
-  { id: 'progress', label: '학습 변화 확인' },
-  { id: 'teacher', label: '교사용 보기' }
+  { id: 'progress', label: '학습 변화 확인' }
 ];
 
 const lessonSubTabsMap = {
@@ -58,6 +57,117 @@ const teacherSectionOptions = [
   { id: 'observe', label: '관찰하기' },
   { id: 'explain', label: '설명하기' }
 ];
+
+const formPanels = {
+  pretest: {
+    title: '사전 검사',
+    description: '수업 시작 전 기관계 관련 사전 개념 검사를 Google Form으로 진행합니다.',
+    openUrl:
+      'https://docs.google.com/forms/d/e/1FAIpQLSeOZ6vmd6q3VrnmjTpkJ4xJTUaIJx_qhkBLdVLvS1CnHpWBOg/viewform',
+    embedUrl:
+      'https://docs.google.com/forms/d/e/1FAIpQLSeOZ6vmd6q3VrnmjTpkJ4xJTUaIJx_qhkBLdVLvS1CnHpWBOg/viewform?embedded=true'
+  },
+  posttest: {
+    title: '사후 검사',
+    description: '3차시 수업 후 기관계 관련 사후 개념 검사를 Google Form으로 진행합니다.',
+    openUrl:
+      'https://docs.google.com/forms/d/e/1FAIpQLSdt9GfLprmm4oTSS-7PdsxT34bx4o5UlUSz-Xi5TJb0ocQUjA/viewform',
+    embedUrl:
+      'https://docs.google.com/forms/d/e/1FAIpQLSdt9GfLprmm4oTSS-7PdsxT34bx4o5UlUSz-Xi5TJb0ocQUjA/viewform?embedded=true'
+  }
+};
+
+const increaseBetterQuestions = [
+  '심장은 우리 몸에 필요한 영양소, 산소를 온몸으로 운반한다.',
+  '소화기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.',
+  "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 '폐'이다.",
+  '노폐물을 몸 밖으로 내보내는 과정을 배설이라고 한다.'
+];
+
+function normalizeQuestionName(value) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/[‘’“”"']/g, "'")
+    .trim();
+}
+
+function isIncreaseBetterQuestion(questionName) {
+  const normalized = normalizeQuestionName(questionName);
+  return increaseBetterQuestions.some((q) => normalizeQuestionName(q) === normalized);
+}
+
+function parseDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseScore(value) {
+  if (value == null) return null;
+  const match = String(value).match(/([0-5](?:\.0+)?)/);
+  return match ? Number(match[1]) : null;
+}
+
+function extractRows(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.rows)) return payload.rows;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.items)) return payload.items;
+  return [];
+}
+
+function findNameColumn(row) {
+  return Object.keys(row || {}).find((key) => key.includes('이름')) || null;
+}
+
+function findStudentIdColumn(row) {
+  return Object.keys(row || {}).find((key) => key.includes('학번')) || null;
+}
+
+function findTimestampColumn(row) {
+  return Object.keys(row || {}).find((key) => key.includes('타임스탬프')) || null;
+}
+
+function findLatestMatchingRow(rows, name, studentId, nameCol, idCol, timeCol) {
+  return (rows || [])
+    .filter(
+      (row) =>
+        String(row?.[nameCol] || '').trim() === name.trim() &&
+        String(row?.[idCol] || '').trim() === studentId.trim()
+    )
+    .sort((a, b) => {
+      const aDate = parseDate(a?.[timeCol]);
+      const bDate = parseDate(b?.[timeCol]);
+      return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
+    })[0] || null;
+}
+
+function classifyChange(questionName, preScore, postScore) {
+  if (preScore == null || postScore == null) return '동일';
+
+  const increaseBetter = isIncreaseBetterQuestion(questionName);
+
+  if (increaseBetter) {
+    if (postScore > preScore) return '개선';
+    if (postScore < preScore) return '악화';
+    return '동일';
+  }
+
+  if (postScore < preScore) return '개선';
+  if (postScore > preScore) return '악화';
+  return '동일';
+}
+
+function getChangeTone(change) {
+  if (change === '개선') return 'tone-up';
+  if (change === '악화') return 'tone-down';
+  return 'tone-neutral';
+}
+
+function formatDateTime(value) {
+  const date = parseDate(value);
+  return date ? date.toLocaleString('ko-KR') : '-';
+}
 
 const detailedLessonData = {
   lesson1: {
@@ -509,7 +619,7 @@ const quickLinks = [
   { id: 'lesson1', title: '1차시 바로가기', caption: '소화계 학습과 입력 영역을 확인합니다.' },
   { id: 'lesson2', title: '2차시 바로가기', caption: '순환계·호흡계 입력과 저장 흐름을 확인합니다.' },
   { id: 'lesson3', title: '3차시 바로가기', caption: '배설계 입력과 저장 흐름을 확인합니다.' },
-  { id: 'teacher', title: '교사용 보기 바로가기', caption: '학생 응답을 필터링해 확인합니다.' }
+  { id: 'progress', title: '학습 변화 확인 바로가기', caption: '사전/사후 검사 결과 비교 대시보드를 확인합니다.' }
 ];
 
 const usageSteps = [
@@ -524,6 +634,14 @@ function App() {
   const [lessonTabState, setLessonTabState] = useState(initialLessonTabState);
   const [responseState, setResponseState] = useState(() => createEmptyResponses());
   const [saveStatus, setSaveStatus] = useState({});
+  const [searchName, setSearchName] = useState('');
+  const [searchStudentId, setSearchStudentId] = useState('');
+  const [prePayload, setPrePayload] = useState(null);
+  const [postPayload, setPostPayload] = useState(null);
+  const [compareResult, setCompareResult] = useState(null);
+  const [compareError, setCompareError] = useState('');
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [sortMode, setSortMode] = useState('original');
   const [teacherFilter, setTeacherFilter] = useState({ lesson: 'lesson1', section: 'icebreak' });
   const [teacherResponses, setTeacherResponses] = useState([]);
   const [teacherMeta, setTeacherMeta] = useState({ loading: false, error: '', fetched: false });
@@ -680,6 +798,130 @@ function App() {
     }
   };
 
+  const runComparison = async () => {
+    const trimmedName = searchName.trim();
+    const trimmedStudentId = searchStudentId.trim();
+
+    if (!trimmedName || !trimmedStudentId) {
+      setCompareError('이름과 학번을 모두 입력해 주세요.');
+      setCompareResult(null);
+      return;
+    }
+
+    setCompareLoading(true);
+    setCompareError('');
+
+    try {
+      const [preRes, postRes] = await Promise.all([
+        fetch('/.netlify/functions/proxy?dataset=pre', { cache: 'no-store' }),
+        fetch('/.netlify/functions/proxy?dataset=post', { cache: 'no-store' })
+      ]);
+
+      const [preJson, postJson] = await Promise.all([preRes.json(), postRes.json()]);
+      setPrePayload(preJson);
+      setPostPayload(postJson);
+
+      if (!preRes.ok || !postRes.ok) {
+        throw new Error('사전 또는 사후 검사 데이터를 불러오지 못했습니다.');
+      }
+
+      const preRows = extractRows(preJson);
+      const postRows = extractRows(postJson);
+      const sampleRow = preRows[0] || postRows[0] || {};
+
+      const nameCol = findNameColumn(sampleRow);
+      const idCol = findStudentIdColumn(sampleRow);
+      const timeCol = findTimestampColumn(sampleRow);
+
+      if (!nameCol || !idCol || !timeCol) {
+        throw new Error('이름/학번/타임스탬프 컬럼을 자동으로 찾지 못했습니다.');
+      }
+
+      const latestPre = findLatestMatchingRow(preRows, trimmedName, trimmedStudentId, nameCol, idCol, timeCol);
+      const latestPost = findLatestMatchingRow(postRows, trimmedName, trimmedStudentId, nameCol, idCol, timeCol);
+
+      if (!latestPre || !latestPost) {
+        throw new Error('이름과 학번이 모두 일치하는 사전/사후 검사 응답을 찾지 못했습니다.');
+      }
+
+      const excluded = new Set([nameCol, idCol, timeCol]);
+      const sharedQuestionKeys = Object.keys(latestPre).filter(
+        (key) =>
+          !excluded.has(key) &&
+          Object.prototype.hasOwnProperty.call(latestPost, key) &&
+          (parseScore(latestPre[key]) != null || parseScore(latestPost[key]) != null)
+      );
+
+      if (!sharedQuestionKeys.length) {
+        throw new Error('비교 가능한 점수 문항을 찾지 못했습니다.');
+      }
+
+      const items = sharedQuestionKeys.map((question, index) => {
+        const preScore = parseScore(latestPre[question]);
+        const postScore = parseScore(latestPost[question]);
+        const delta =
+          preScore == null || postScore == null ? null : Number((postScore - preScore).toFixed(2));
+        return {
+          index,
+          question,
+          preScore,
+          postScore,
+          delta,
+          change: classifyChange(question, preScore, postScore)
+        };
+      });
+
+      const validScores = items.filter((item) => item.preScore != null && item.postScore != null);
+      const preAverage = validScores.length
+        ? Number((validScores.reduce((sum, item) => sum + item.preScore, 0) / validScores.length).toFixed(2))
+        : 0;
+      const postAverage = validScores.length
+        ? Number((validScores.reduce((sum, item) => sum + item.postScore, 0) / validScores.length).toFixed(2))
+        : 0;
+      const deltaAverage = Number((postAverage - preAverage).toFixed(2));
+      const improvedCount = items.filter((item) => item.change === '개선').length;
+      const sameCount = items.filter((item) => item.change === '동일').length;
+      const worsenedCount = items.filter((item) => item.change === '악화').length;
+
+      setCompareResult({
+        student: {
+          name: trimmedName,
+          studentId: trimmedStudentId,
+          preTimestamp: latestPre[timeCol],
+          postTimestamp: latestPost[timeCol]
+        },
+        summary: {
+          questionCount: items.length,
+          preAverage,
+          postAverage,
+          deltaAverage,
+          improvedCount,
+          sameCount,
+          worsenedCount
+        },
+        items
+      });
+      setSortMode('original');
+    } catch (error) {
+      setCompareResult(null);
+      setCompareError(error.message || '비교 결과를 불러오지 못했습니다.');
+    } finally {
+      setCompareLoading(false);
+    }
+  };
+
+  const sortedCompareItems = useMemo(() => {
+    if (!compareResult) return [];
+    const base = [...compareResult.items];
+    if (sortMode === 'improved') {
+      return base.sort((a, b) => (b.delta ?? -Infinity) - (a.delta ?? -Infinity));
+    }
+    if (sortMode === 'worsened') {
+      return base.sort((a, b) => (a.delta ?? Infinity) - (b.delta ?? Infinity));
+    }
+    return base.sort((a, b) => a.index - b.index);
+  }, [compareResult, sortMode]);
+
   const renderHome = () => (
     <div className="page-stack">
       <section className="card hero-card">
@@ -759,6 +1001,263 @@ function App() {
       </section>
     </div>
   );
+
+  const renderFormPanel = ({ title, description, openUrl, embedUrl }) => (
+    <div className="page-stack">
+      <section className="card survey-card">
+        <div className="survey-head">
+          <div>
+            <span className="section-tag">설문 참여</span>
+            <h2>{title}</h2>
+          </div>
+          <a href={openUrl} target="_blank" rel="noopener noreferrer" className="primary-button ghost-link">
+            새 창에서 열기
+          </a>
+        </div>
+        <p className="body-text">{description}</p>
+      </section>
+
+      <section className="card survey-card">
+        <iframe src={embedUrl} title={title} className="survey-iframe" />
+      </section>
+    </div>
+  );
+
+  const renderProgressDashboard = () => {
+    const metricCards = compareResult
+      ? [
+          { label: '분석 문항 수', value: `${compareResult.summary.questionCount}개` },
+          { label: '사전 평균', value: compareResult.summary.preAverage.toFixed(2) },
+          { label: '사후 평균', value: compareResult.summary.postAverage.toFixed(2) },
+          { label: '평균 변화량', value: `${compareResult.summary.deltaAverage >= 0 ? '+' : ''}${compareResult.summary.deltaAverage.toFixed(2)}` },
+          { label: '개선 문항 수', value: `${compareResult.summary.improvedCount}개` },
+          { label: '동일 문항 수', value: `${compareResult.summary.sameCount}개` },
+          { label: '악화 문항 수', value: `${compareResult.summary.worsenedCount}개` }
+        ]
+      : [];
+
+    return (
+      <div className="page-stack">
+        <section className="card detail-card">
+          <div className="section-heading section-heading--stacked compact-gap">
+            <div>
+              <span className="section-tag">결과 조회</span>
+              <h2>학습 변화 확인</h2>
+            </div>
+            <p>이름과 학번을 모두 입력해 주세요.</p>
+          </div>
+
+          <div
+            className="search-grid"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                runComparison();
+              }
+            }}
+          >
+            <label className="field-label search-field">
+              <span>이름</span>
+              <input
+                className="text-input"
+                value={searchName}
+                onChange={(event) => setSearchName(event.target.value)}
+                placeholder="예: 홍길동"
+              />
+            </label>
+            <label className="field-label search-field">
+              <span>학번</span>
+              <input
+                className="text-input"
+                value={searchStudentId}
+                onChange={(event) => setSearchStudentId(event.target.value)}
+                placeholder="예: 20230001"
+              />
+            </label>
+            <div className="teacher-action-cell">
+              <button type="button" className="primary-button" onClick={runComparison}>
+                조회
+              </button>
+            </div>
+          </div>
+
+          {compareError && <p className="status-message status-message--error">{compareError}</p>}
+          {compareLoading && <p className="status-message status-message--loading">사전/사후 검사 결과를 조회하는 중입니다...</p>}
+        </section>
+
+        {compareResult && (
+          <>
+            <section className="card detail-card">
+              <div className="section-heading section-heading--stacked compact-gap">
+                <div>
+                  <span className="section-tag">학생 정보</span>
+                  <h3>조회된 학생 정보</h3>
+                </div>
+              </div>
+              <div className="metrics-grid metrics-grid--student">
+                <article className="metric-card">
+                  <span>이름</span>
+                  <strong>{compareResult.student.name}</strong>
+                </article>
+                <article className="metric-card">
+                  <span>학번</span>
+                  <strong>{compareResult.student.studentId}</strong>
+                </article>
+                <article className="metric-card">
+                  <span>사전 응답 시각</span>
+                  <strong>{formatDateTime(compareResult.student.preTimestamp)}</strong>
+                </article>
+                <article className="metric-card">
+                  <span>사후 응답 시각</span>
+                  <strong>{formatDateTime(compareResult.student.postTimestamp)}</strong>
+                </article>
+              </div>
+            </section>
+
+            <section className="card detail-card">
+              <div className="section-heading section-heading--stacked compact-gap">
+                <div>
+                  <span className="section-tag">요약 카드</span>
+                  <h3>결과 요약</h3>
+                </div>
+              </div>
+              <div className="metrics-grid">
+                {metricCards.map((metric) => (
+                  <article key={metric.label} className="metric-card">
+                    <span>{metric.label}</span>
+                    <strong>{metric.value}</strong>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="card detail-card">
+              <div className="section-heading section-heading--stacked compact-gap">
+                <div>
+                  <span className="section-tag">그래프 1</span>
+                  <h3>사전 평균 vs 사후 평균</h3>
+                </div>
+              </div>
+              <div className="simple-chart">
+                {[
+                  { label: '사전 평균', value: compareResult.summary.preAverage, className: 'tone-neutral' },
+                  { label: '사후 평균', value: compareResult.summary.postAverage, className: 'tone-up' }
+                ].map((bar) => (
+                  <div key={bar.label} className="chart-row">
+                    <span>{bar.label}</span>
+                    <div className="chart-track">
+                      <div className={`chart-bar ${bar.className}`} style={{ width: `${(bar.value / 5) * 100}%` }} />
+                    </div>
+                    <strong>{bar.value.toFixed(2)}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="card detail-card">
+              <div className="section-heading section-heading--stacked compact-gap">
+                <div>
+                  <span className="section-tag">그래프 2</span>
+                  <h3>문항별 사전/사후 비교</h3>
+                </div>
+              </div>
+              <div className="bars-grid">
+                {compareResult.items.map((item) => (
+                  <article key={item.question} className="bar-card">
+                    <h4>{item.question}</h4>
+                    <div className="chart-row">
+                      <span>사전</span>
+                      <div className="chart-track">
+                        <div className="chart-bar tone-neutral" style={{ width: `${((item.preScore || 0) / 5) * 100}%` }} />
+                      </div>
+                      <strong>{item.preScore ?? '-'}</strong>
+                    </div>
+                    <div className="chart-row">
+                      <span>사후</span>
+                      <div className="chart-track">
+                        <div className="chart-bar tone-up" style={{ width: `${((item.postScore || 0) / 5) * 100}%` }} />
+                      </div>
+                      <strong>{item.postScore ?? '-'}</strong>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="card detail-card">
+              <div className="section-heading section-heading--stacked compact-gap">
+                <div>
+                  <span className="section-tag">그래프 3</span>
+                  <h3>개선 / 동일 / 악화 분포</h3>
+                </div>
+              </div>
+              <div className="simple-chart">
+                {[
+                  { label: '개선', value: compareResult.summary.improvedCount, className: 'tone-up' },
+                  { label: '동일', value: compareResult.summary.sameCount, className: 'tone-neutral' },
+                  { label: '악화', value: compareResult.summary.worsenedCount, className: 'tone-down' }
+                ].map((bar) => (
+                  <div key={bar.label} className="chart-row">
+                    <span>{bar.label}</span>
+                    <div className="chart-track">
+                      <div
+                        className={`chart-bar ${bar.className}`}
+                        style={{ width: `${compareResult.summary.questionCount ? (bar.value / compareResult.summary.questionCount) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <strong>{bar.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="card detail-card">
+              <div className="section-heading">
+                <div>
+                  <span className="section-tag">문항별 비교표</span>
+                  <h3>문항별 비교</h3>
+                </div>
+                <label className="field-label search-field search-field--inline">
+                  <span>정렬</span>
+                  <select className="text-input" value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
+                    <option value="original">원래 순서</option>
+                    <option value="improved">개선 큰 순</option>
+                    <option value="worsened">악화 큰 순</option>
+                  </select>
+                </label>
+              </div>
+              <div className="table-wrap">
+                <table className="compare-table">
+                  <thead>
+                    <tr>
+                      <th>문항명</th>
+                      <th>사전 점수</th>
+                      <th>사후 점수</th>
+                      <th>변화량(Δ)</th>
+                      <th>판정</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedCompareItems.map((item) => (
+                      <tr key={item.question}>
+                        <td>{item.question}</td>
+                        <td>{item.preScore ?? '-'}</td>
+                        <td>{item.postScore ?? '-'}</td>
+                        <td>{item.delta == null ? '-' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(2)}`}</td>
+                        <td>
+                          <span className={`tone-pill ${getChangeTone(item.change)}`}>{item.change}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderExperimentCard = (experiment) => (
     <article key={experiment.name} className="experiment-card">
@@ -1224,21 +1723,12 @@ function App() {
   const renderContent = () => {
     if (activeTopTab === 'home') return renderHome();
     if (activeTopTab === 'pretest') {
-      return renderAssessment({
-        title: '사전 검사',
-        description: '1차시 수업 전 기관계 관련 사전 개념 검사를 실시하는 영역입니다.',
-        buttonLabel: '사전 검사 시작'
-      });
+      return renderFormPanel(formPanels.pretest);
     }
     if (activeTopTab === 'posttest') {
-      return renderAssessment({
-        title: '사후 검사',
-        description: '3차시 수업 후 기관계 관련 사후 개념 검사를 실시하는 영역입니다.',
-        buttonLabel: '사후 검사 시작'
-      });
+      return renderFormPanel(formPanels.posttest);
     }
-    if (activeTopTab === 'progress') return renderProgress();
-    if (activeTopTab === 'teacher') return renderTeacherView();
+    if (activeTopTab === 'progress') return renderProgressDashboard();
     if (isLessonTab) return renderLesson();
     return null;
   };
@@ -1256,7 +1746,7 @@ function App() {
         </p>
       </header>
 
-      <nav className="top-tab-bar top-tab-bar--teacher" aria-label="상단 메인 탭">
+      <nav className="top-tab-bar" aria-label="상단 메인 탭">
         {topTabs.map((tab) => {
           const isActive = activeTopTab === tab.id;
           return (
