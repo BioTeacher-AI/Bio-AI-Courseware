@@ -21,6 +21,7 @@ const lessonSubTabsMap = {
     { id: 'predict', label: '예상하기' },
     { id: 'observe', label: '관찰하기' },
     { id: 'explain', label: '설명하기' },
+    { id: 'summary', label: '정리하기' },
     { id: 'ai', label: 'AI 보조교사' }
   ],
   lesson2: [
@@ -31,6 +32,7 @@ const lessonSubTabsMap = {
     { id: 'predict', label: '예상하기' },
     { id: 'observe', label: '관찰하기' },
     { id: 'explain', label: '설명하기' },
+    { id: 'summary', label: '정리하기' },
     { id: 'ai', label: 'AI 보조교사' }
   ],
   lesson3: [
@@ -41,6 +43,7 @@ const lessonSubTabsMap = {
     { id: 'predict', label: '예상하기' },
     { id: 'observe', label: '관찰하기' },
     { id: 'explain', label: '설명하기' },
+    { id: 'summary', label: '정리하기' },
     { id: 'ai', label: 'AI 보조교사' }
   ]
 };
@@ -55,7 +58,8 @@ const teacherSectionOptions = [
   { id: 'icebreak', label: '생각열기' },
   { id: 'predict', label: '예상하기' },
   { id: 'observe', label: '관찰하기' },
-  { id: 'explain', label: '설명하기' }
+  { id: 'explain', label: '설명하기' },
+  { id: 'summary', label: '정리하기' }
 ];
 
 const formPanels = {
@@ -332,14 +336,27 @@ const detailedLessonData = {
               '이번 실험에서 관찰된 과정이 에너지를 생성하는 과정이라고 볼 수 있을까요?',
               '실험 과정에서 녹말 용액과 침을 함께 넣은 용액에서 검출된 물질은 무엇인가요? 침의 어떤 성분에 의해 이러한 결과가 나타났을까요? 그리고 그 성분이 생물체의 ‘세포’ 혹은 ‘물질’인가요?',
               '셀로판 튜브는 우리 몸의 기관 중 어느 것에 해당할지 적어보고, 셀로판 튜브를 통과한 영양소는 우리 몸에서 어느 곳으로 이동할지, 또, 셀로판 튜브 안에 남아서 통과하지 못한 물질은 우리 몸 안으로 들어왔다고 할 수 있는지 적어봅시다.',
-              '우리 몸에서 침과 같이 소화를 도와주는 물질이 분비되는 곳은 어느 기관이 있나요? 그리고 그 기관에서 직접적으로 소화 과정을 수행하는지 적어봅시다.',
+              '우리 몸에서 침과 같이 소화를 도와주는 물질이 분비되는 곳은 어느 기관이 있나요? 그리고 그 기관에서 직접적으로 소화 과정을 수행하는지 적어봅시다.'
+            ]
+          }
+        ],
+        saveLabel: '설명하기 저장'
+      },
+      summary: {
+        title: '정리하기',
+        description: '이번 차시에서 배운 핵심 내용을 정리하고, 세포 호흡의 관점에서 기관계의 역할을 정리해 봅시다.',
+        groups: [
+          {
+            title: '정리하기',
+            badgePrefix: '정리',
+            prompts: [
               '세포 호흡의 관점에서 소화계가 하는 역할은?',
               '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 소화계는 어떤 도움을 주어야 할지 적어봅시다.',
               '오늘 수업을 통해 생각이 변화된 것이 있다면 자유롭게 적어주세요.'
             ]
           }
         ],
-        saveLabel: '설명하기 저장'
+        saveLabel: '정리하기 저장'
       }
     },
     aiTitle: '1차시 AI 보조교사',
@@ -479,7 +496,14 @@ const detailedLessonData = {
               '안정된 상태에서와 운동 후 들숨과 날숨에서 각각 산소와 이산화탄소의 비율은 각각 어떻게 될까요?',
               '우리가 들이마신 공기는 어떤 경로를 통해서 우리 몸 내부로 이동하는 것인지 적어봅시다.'
             ]
-          },
+          }
+        ],
+        saveLabel: '설명하기 저장'
+      },
+      summary: {
+        title: '정리하기',
+        description: '이번 차시에서 배운 핵심 내용을 정리하고, 세포 호흡의 관점에서 기관계의 역할을 정리해 봅시다.',
+        groups: [
           {
             title: '정리하기',
             badgePrefix: '정리',
@@ -491,7 +515,7 @@ const detailedLessonData = {
             ]
           }
         ],
-        saveLabel: '설명하기 저장'
+        saveLabel: '정리하기 저장'
       }
     },
     aiTitle: '2차시 AI 보조교사',
@@ -611,14 +635,27 @@ const detailedLessonData = {
               '셀로판 튜브에 남은 물질은 우리 몸에서 무엇을 의미할까요?',
               '비커에 모인 액체는 우리 몸에서 생성되는 물질 중 무엇에 해당하는지 쓰고, 이 액체가 생성되는 과정을 우리 몸의 배설계를 이루는 기관을 포함하여 설명해 봅시다.',
               '소화계에서 소화 과정을 마치고 나온 찌꺼기와 배설계에서 배설 경로를 거쳐 우리 몸에서 빠져나가는 노폐물은 같은 것인가요?',
-              '이 모형에서는 배설계에서 일어나는 과정 중 드러나지 않는 과정이 있습니다. 어떤 과정일까요?',
+              '이 모형에서는 배설계에서 일어나는 과정 중 드러나지 않는 과정이 있습니다. 어떤 과정일까요?'
+            ]
+          }
+        ],
+        saveLabel: '설명하기 저장'
+      },
+      summary: {
+        title: '정리하기',
+        description: '이번 차시에서 배운 핵심 내용을 정리하고, 세포 호흡의 관점에서 기관계의 역할을 정리해 봅시다.',
+        groups: [
+          {
+            title: '정리하기',
+            badgePrefix: '정리',
+            prompts: [
               '세포 호흡의 관점에서 배설계가 하는 역할은?',
               '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 배설계는 어떤 도움을 주어야 할지 적어봅시다.',
               '오늘 수업을 통해 생각이 변화된 것이 있다면 자유롭게 적어주세요.'
             ]
           }
         ],
-        saveLabel: '설명하기 저장'
+        saveLabel: '정리하기 저장'
       }
     },
     aiTitle: '3차시 AI 보조교사',
@@ -1928,6 +1965,10 @@ function App() {
 
     if (activeSubTab === 'explain') {
       return renderResponseSection(lessonKey, 'explain');
+    }
+
+    if (activeSubTab === 'summary') {
+      return renderResponseSection(lessonKey, 'summary');
     }
 
     if (activeSubTab === 'ai') {
