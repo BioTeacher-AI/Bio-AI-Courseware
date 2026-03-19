@@ -8,7 +8,7 @@ const proxyRequest = async (request) => {
 
   const POST_URL =
     process.env.GFORM_JSON_URL_POST ||
-    'https://script.google.com/macros/s/AKfycbyP4-EIA334DbLzscfG-8i95-IOgn5cFk5Glik8LkqRzP3aW9L2qy1V7RqXmAnYwF8U/exec';
+    'https://script.google.com/macros/s/AKfycbwGWHDZ3l1pufPPCDixCmighF6tmMlC31-Oa_hHlp9sFwMEEFr9fakdhh8KoL986_4/exec';
 
   const targetUrl = dataset === 'post' ? POST_URL : PRE_URL;
 

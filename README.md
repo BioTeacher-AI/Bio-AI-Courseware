@@ -31,12 +31,14 @@
 - `RESPONSE_SAVE_URL`
 - `RESPONSE_READ_URL`
 - `GFORM_JSON_URL_PRE`
-- `GFORM_JSON_URL_POST`
+- `GFORM_JSON_URL_POST` (기본 사후 URL: `https://script.google.com/macros/s/AKfycbwGWHDZ3l1pufPPCDixCmighF6tmMlC31-Oa_hHlp9sFwMEEFr9fakdhh8KoL986_4/exec`)
 
 ## Netlify Function proxy 구조
 - 학습 변화 확인 탭은 브라우저에서 Apps Script URL을 직접 호출하지 않습니다.
 - 대신 `/.netlify/functions/proxy?dataset=pre` 와 `/.netlify/functions/proxy?dataset=post` 를 호출합니다.
-- `netlify/functions/proxy.js` 는 `dataset` 값에 따라 사전/사후 결과 API를 프록시합니다.
+- `netlify/functions/proxy.js` 는 `dataset` 값에 따라 `GFORM_JSON_URL_PRE` 또는 `GFORM_JSON_URL_POST` 를 선택해 각각 다른 Apps Script URL로 프록시합니다.
+- 사후 검사 기본 fallback URL은 `https://script.google.com/macros/s/AKfycbwGWHDZ3l1pufPPCDixCmighF6tmMlC31-Oa_hHlp9sFwMEEFr9fakdhh8KoL986_4/exec` 입니다.
+- 학습 변화 확인 탭은 proxy를 통해 불러온 pre/post payload를 분리 저장한 뒤 공통 문항만 비교합니다.
 
 ## 저장 흐름
 1. 프론트엔드는 `/.netlify/functions/save-response`로 POST 요청을 보냅니다.

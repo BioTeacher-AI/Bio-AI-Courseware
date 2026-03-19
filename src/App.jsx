@@ -826,6 +826,27 @@ function App() {
     }
   };
 
+  const loadBothDatasets = async () => {
+    const [preResponse, postResponse] = await Promise.all([
+      fetch('/.netlify/functions/proxy?dataset=pre', { cache: 'no-store' }),
+      fetch('/.netlify/functions/proxy?dataset=post', { cache: 'no-store' })
+    ]);
+
+    const [preJson, postJson] = await Promise.all([preResponse.json(), postResponse.json()]);
+
+    if (!preResponse.ok || !postResponse.ok) {
+      throw new Error('사전 또는 사후 검사 데이터를 불러오지 못했습니다.');
+    }
+
+    const nextPrePayload = normalizePayload(preJson, 'pre');
+    const nextPostPayload = normalizePayload(postJson, 'post');
+
+    setPrePayload(nextPrePayload);
+    setPostPayload(nextPostPayload);
+
+    return { nextPrePayload, nextPostPayload };
+  };
+
   const runComparison = async () => {
     const cleanName = searchName.trim();
     const cleanStudentId = searchStudentId.trim();
@@ -840,33 +861,32 @@ function App() {
     setCompareError('');
 
     try {
-      const [preResponse, postResponse] = await Promise.all([
-        fetch('/.netlify/functions/proxy?dataset=pre', { cache: 'no-store' }),
-        fetch('/.netlify/functions/proxy?dataset=post', { cache: 'no-store' })
-      ]);
+      let localPrePayload = prePayload;
+      let localPostPayload = postPayload;
 
-      const [preJson, postJson] = await Promise.all([preResponse.json(), postResponse.json()]);
-
-      if (!preResponse.ok || !postResponse.ok) {
-        throw new Error('사전 또는 사후 검사 데이터를 불러오지 못했습니다.');
+      if (!localPrePayload.data.length || !localPostPayload.data.length) {
+        const loaded = await loadBothDatasets();
+        localPrePayload = loaded.nextPrePayload;
+        localPostPayload = loaded.nextPostPayload;
       }
 
-      const nextPrePayload = normalizePayload(preJson, 'pre');
-      const nextPostPayload = normalizePayload(postJson, 'post');
-      setPrePayload(nextPrePayload);
-      setPostPayload(nextPostPayload);
+      if (!localPrePayload.data.length || !localPostPayload.data.length) {
+        throw new Error('일치하는 학생 정보를 찾을 수 없습니다.');
+      }
 
-      const preRows = nextPrePayload.data;
-      const postRows = nextPostPayload.data;
-      const preSampleRow = preRows[0] || {};
-      const postSampleRow = postRows[0] || {};
+      const preRows = localPrePayload.data;
+      const postRows = localPostPayload.data;
+      const preHeaders = Object.keys(preRows[0] || {});
+      const postHeaders = Object.keys(postRows[0] || {});
+      const preHeaderMap = new Map(preHeaders.map((header) => [normalizeQuestionName(header), header]));
+      const postHeaderMap = new Map(postHeaders.map((header) => [normalizeQuestionName(header), header]));
 
-      const preNameCol = findColumn(preSampleRow, ['이름']);
-      const preStudentCol = findColumn(preSampleRow, ['학번']);
-      const preTimestampCol = findColumn(preSampleRow, ['타임스탬프', '응답 시간', '제출 시간']);
-      const postNameCol = findColumn(postSampleRow, ['이름']);
-      const postStudentCol = findColumn(postSampleRow, ['학번']);
-      const postTimestampCol = findColumn(postSampleRow, ['타임스탬프', '응답 시간', '제출 시간']);
+      const preNameCol = findColumn(preRows[0], ['이름']);
+      const preStudentCol = findColumn(preRows[0], ['학번']);
+      const preTimestampCol = findColumn(preRows[0], ['타임스탬프', '응답 시간', '제출 시간']);
+      const postNameCol = findColumn(postRows[0], ['이름']);
+      const postStudentCol = findColumn(postRows[0], ['학번']);
+      const postTimestampCol = findColumn(postRows[0], ['타임스탬프', '응답 시간', '제출 시간']);
 
       if (!preNameCol || !preStudentCol || !preTimestampCol || !postNameCol || !postStudentCol || !postTimestampCol) {
         throw new Error('사전/사후 데이터에서 이름, 학번, 타임스탬프 컬럼을 찾지 못했습니다.');
@@ -876,47 +896,49 @@ function App() {
       const matchedPost = pickLatestMatch(postRows, postNameCol, postStudentCol, cleanName, cleanStudentId, postTimestampCol);
 
       if (!matchedPre || !matchedPost) {
-        throw new Error('이름과 학번이 모두 일치하는 사전/사후 검사 응답을 찾지 못했습니다.');
+        throw new Error('일치하는 학생 정보를 찾을 수 없습니다.');
       }
 
-      const excludedColumns = new Set([
-        preNameCol,
-        preStudentCol,
-        preTimestampCol,
-        postNameCol,
-        postStudentCol,
-        postTimestampCol
-      ]);
-
-      const postQuestionMap = new Map(
-        Object.keys(matchedPost).map((key) => [normalizeQuestionName(key), { key, question: key }])
+      const preExcludedColumns = new Set([preNameCol, preStudentCol, preTimestampCol]);
+      const postExcludedColumns = new Set([postNameCol, postStudentCol, postTimestampCol]);
+      const preScoreColumns = preHeaders.filter(
+        (header) =>
+          !preExcludedColumns.has(header) &&
+          (parseScore(matchedPre?.[header]) !== null || parseScore((preRows[0] || {})[header]) !== null)
+      );
+      const postScoreColumns = postHeaders.filter(
+        (header) =>
+          !postExcludedColumns.has(header) &&
+          (parseScore(matchedPost?.[header]) !== null || parseScore((postRows[0] || {})[header]) !== null)
+      );
+      const normalizedPostScoreColumns = postScoreColumns.map((header) => normalizeQuestionName(header));
+      const commonColumns = preScoreColumns.filter((header) =>
+        normalizedPostScoreColumns.includes(normalizeQuestionName(header))
       );
 
-      const items = Object.keys(matchedPre)
-        .filter((key) => !excludedColumns.has(key))
-        .map((preKey, index) => {
-          const normalizedQuestion = normalizeQuestionName(preKey);
-          const postQuestion = postQuestionMap.get(normalizedQuestion);
-          if (!postQuestion) return null;
+      const items = commonColumns
+        .map((column, index) => {
+          const normalizedColumn = normalizeQuestionName(column);
+          const preColumn = preHeaderMap.get(normalizedColumn) || column;
+          const postColumn = postHeaderMap.get(normalizedColumn);
+          if (!postColumn) return null;
 
-          const questionName = preKey;
-          const preScore = parseScore(matchedPre[preKey]);
-          const postScore = parseScore(matchedPost[postQuestion.key]);
+          const pre = matchedPre ? parseScore(matchedPre[preColumn]) : null;
+          const post = matchedPost ? parseScore(matchedPost[postColumn]) : null;
 
-          if (preScore === null && postScore === null) return null;
+          if (pre === null && post === null) return null;
 
-          const delta =
-            preScore === null || postScore === null ? null : Number((postScore - preScore).toFixed(2));
-          const judgement = classifyChange(questionName, preScore, postScore);
+          const delta = pre === null || post === null ? null : Number((post - pre).toFixed(2));
+          const judgement = classifyChange(column, pre, post);
 
           return {
             index,
-            question: questionName,
-            preScore,
-            postScore,
+            question: preColumn,
+            preScore: pre,
+            postScore: post,
             delta,
             judgement,
-            directionScore: getDirectionScore(questionName, preScore, postScore)
+            directionScore: getDirectionScore(column, pre, post)
           };
         })
         .filter(Boolean);
