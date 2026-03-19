@@ -148,6 +148,7 @@ button {
 
 .hero-card,
 .info-card,
+.resource-card,
 .shortcuts-card,
 .assessment-card,
 .placeholder-card,
@@ -170,6 +171,7 @@ button {
 
 .hero-card h2,
 .info-card h3,
+.resource-card h3,
 .shortcuts-card h3,
 .assessment-card h2,
 .lesson-sidebar h2,
@@ -182,6 +184,7 @@ button {
 
 .hero-card p,
 .info-card p,
+.resource-card p,
 .lesson-sidebar p,
 .lesson-content p,
 .body-text,
@@ -204,6 +207,18 @@ button {
 }
 
 .guide-list li + li {
+  margin-top: 10px;
+}
+
+
+.resource-list {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  color: #4a5670;
+  line-height: 1.7;
+}
+
+.resource-list li + li {
   margin-top: 10px;
 }
 

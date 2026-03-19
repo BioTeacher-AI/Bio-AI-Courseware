@@ -1626,7 +1626,7 @@ function App() {
     );
   };
 
-  const renderResponseSection = (lessonKey, sectionKey, sectionOverride = null) => {
+  const renderResponseSection = (lessonKey, sectionKey, sectionOverride = null, contentAfterHeader = null) => {
     const lesson = detailedLessonData[lessonKey];
     const section = sectionOverride || lesson.responseSections[sectionKey];
     const answers = responseState[lessonKey]?.sections?.[sectionKey] ?? {};
@@ -1648,6 +1648,8 @@ function App() {
             </div>
             <p>{section.description}</p>
           </div>
+
+          {contentAfterHeader}
 
           <div className="lesson-detail-stack lesson-detail-stack--compact">
             {section.groups.map((group, groupIndex) => (
@@ -1731,6 +1733,27 @@ function App() {
     );
   };
 
+
+
+  const renderLesson3IcebreakResources = () => (
+    <div className="lesson-detail-stack lesson-detail-stack--compact">
+      <section className="card info-card">
+        <span className="section-tag">도입 자료</span>
+        <h3>자료 안내</h3>
+        <p>다음은 42.195km 마라톤을 하는 운동선수의 몸속에서 일어나는 생리적 변화에 대한 자료입니다.</p>
+      </section>
+
+      <section className="card resource-card">
+        <span className="section-tag">자료</span>
+        <h3>[자료] 마라톤 선수의 몸속에서 일어나는 생리적 변화</h3>
+        <ol className="resource-list">
+          {detailedLessonData.lesson3.extraInfoItems.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  );
 
   const renderAITutor = (lessonKey) => {
     const labels = {
@@ -1955,29 +1978,8 @@ function App() {
     }
 
     if (activeSubTab === 'icebreak') {
-      return (
-        <div className="lesson-detail-stack">
-          {renderResponseSection(lessonKey, 'icebreak')}
-          {lesson.extraInfoItems && (
-            <section className="card detail-card">
-              <div className="section-heading section-heading--stacked compact-gap">
-                <div>
-                  <span className="section-tag">추가 정보</span>
-                  <h3>참고 정보</h3>
-                </div>
-              </div>
-              <div className="info-list-grid">
-                {lesson.extraInfoItems.map((item, index) => (
-                  <article key={item} className="info-item-card">
-                    <span className="info-item-badge">정보 {index + 1}</span>
-                    <p>{item}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      );
+      const contentAfterHeader = lessonKey === 'lesson3' ? renderLesson3IcebreakResources() : null;
+      return renderResponseSection(lessonKey, 'icebreak', null, contentAfterHeader);
     }
 
     if (activeSubTab === 'experiment') {
