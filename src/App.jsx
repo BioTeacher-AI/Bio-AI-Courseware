@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import circulationDiagram from './assets/circulation-diagram.svg';
 
 const STORAGE_KEY = 'bio-ai-courseware-state-v2';
 
@@ -197,6 +198,25 @@ function getDirectionScore(questionName, preScore, postScore) {
   return isIncreaseBetterQuestion(questionName) ? delta : -delta;
 }
 
+function drawArrow(ctx, fromX, fromY, toX, toY) {
+  const headlen = 10;
+  const angle = Math.atan2(toY - fromY, toX - fromX);
+
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.lineTo(toX, toY);
+  ctx.lineTo(
+    toX - headlen * Math.cos(angle - Math.PI / 6),
+    toY - headlen * Math.sin(angle - Math.PI / 6)
+  );
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(
+    toX - headlen * Math.cos(angle + Math.PI / 6),
+    toY - headlen * Math.sin(angle + Math.PI / 6)
+  );
+  ctx.stroke();
+}
+
 const detailedLessonData = {
   lesson1: {
     title: '1차시: 소화계',
@@ -342,7 +362,7 @@ const detailedLessonData = {
     ],
     icebreakQuestions: [
       '마라톤 선수들은 어떻게 지치지 않고 계속해서 달릴 수 있을까요?',
-      '아래 그림은 우리 몸의 순환계를 구조화한 모식도입니다. 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 생각해 보고, 아래 모식도에 화살표로 나타내 봅시다.',
+      '위 그림을 보고, 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 화살표 방향을 떠올려 설명해 보세요.',
       '모식도에 나와 있는 각 혈관의 명칭과 그 혈관을 지나는 혈액의 산소의 양도 함께 표시해 봅시다.'
     ],
     icebreakExtraPlaceholder: '모식도 작성 활동이 들어갈 영역입니다.',
@@ -381,7 +401,7 @@ const detailedLessonData = {
             badgePrefix: '질문',
             prompts: [
               '마라톤 선수들은 어떻게 지치지 않고 계속해서 달릴 수 있을까요?',
-              '아래 그림은 우리 몸의 순환계를 구조화한 모식도입니다. 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 생각해 보고, 아래 모식도에 화살표로 나타내 봅시다.',
+              '위 그림을 보고, 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 화살표 방향을 떠올려 설명해 보세요.',
               '모식도에 나와 있는 각 혈관의 명칭과 그 혈관을 지나는 혈액의 산소의 양도 함께 표시해 봅시다.'
             ]
           }
@@ -673,6 +693,11 @@ function App() {
   const [teacherFilter, setTeacherFilter] = useState({ lesson: 'lesson1', section: 'icebreak' });
   const [teacherResponses, setTeacherResponses] = useState([]);
   const [teacherMeta, setTeacherMeta] = useState({ loading: false, error: '', fetched: false });
+  const lesson2CanvasRef = useRef(null);
+  const lesson2ImageRef = useRef(null);
+  const lesson2ArrowsRef = useRef([]);
+  const [lesson2IsDrawing, setLesson2IsDrawing] = useState(false);
+  const [lesson2StartPoint, setLesson2StartPoint] = useState(null);
 
   const isLessonTab = ['lesson1', 'lesson2', 'lesson3'].includes(activeTopTab);
   const activeLesson = lessonContent[activeTopTab];
@@ -724,6 +749,105 @@ function App() {
     fetchTeacherResponses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTopTab, teacherFilter.lesson, teacherFilter.section]);
+
+
+  const redrawLesson2Canvas = () => {
+    const canvas = lesson2CanvasRef.current;
+    const image = lesson2ImageRef.current;
+    if (!canvas || !image) return;
+
+    const width = image.clientWidth;
+    const height = image.clientHeight;
+    if (!width || !height) return;
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#1f376d';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    lesson2ArrowsRef.current.forEach((arrow) => {
+      drawArrow(ctx, arrow.fromX, arrow.fromY, arrow.toX, arrow.toY);
+    });
+  };
+
+  const syncLesson2CanvasSize = () => {
+    redrawLesson2Canvas();
+  };
+
+  useEffect(() => {
+    if (activeTopTab !== 'lesson2' || activeSubTab !== 'icebreak') return undefined;
+
+    const handleResize = () => syncLesson2CanvasSize();
+    handleResize();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+    return undefined;
+  }, [activeTopTab, activeSubTab]);
+
+  const getLesson2CanvasPoint = (event) => {
+    const canvas = lesson2CanvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  };
+
+  const handleLesson2CanvasMouseDown = (event) => {
+    const point = getLesson2CanvasPoint(event);
+    if (!point) return;
+    setLesson2IsDrawing(true);
+    setLesson2StartPoint(point);
+  };
+
+  const handleLesson2CanvasMouseUp = (event) => {
+    if (!lesson2IsDrawing || !lesson2StartPoint) return;
+    const point = getLesson2CanvasPoint(event);
+    if (!point) return;
+
+    lesson2ArrowsRef.current = [
+      ...lesson2ArrowsRef.current,
+      {
+        fromX: lesson2StartPoint.x,
+        fromY: lesson2StartPoint.y,
+        toX: point.x,
+        toY: point.y
+      }
+    ];
+    redrawLesson2Canvas();
+    setLesson2IsDrawing(false);
+    setLesson2StartPoint(null);
+  };
+
+  const resetLesson2Drawing = () => {
+    lesson2ArrowsRef.current = [];
+    redrawLesson2Canvas();
+    handleAnswerChange('lesson2', 'icebreak', 'q2Drawing', '');
+  };
+
+  const exportLesson2Drawing = () => {
+    const canvas = lesson2CanvasRef.current;
+    const image = lesson2ImageRef.current;
+    if (!canvas || !image || !lesson2ArrowsRef.current.length) return '';
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = image.naturalWidth || canvas.width;
+    exportCanvas.height = image.naturalHeight || canvas.height;
+    const exportCtx = exportCanvas.getContext('2d');
+    exportCtx.drawImage(image, 0, 0, exportCanvas.width, exportCanvas.height);
+    exportCtx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+    return exportCanvas.toDataURL('image/png');
+  };
 
   const handleSubTabChange = (lessonKey, subTabId) => {
     setLessonTabState((current) => ({
@@ -777,12 +901,38 @@ function App() {
     }));
 
     try {
+      let preparedAnswers = answers;
+
+      if (lessonKey === 'lesson2' && sectionKey === 'icebreak') {
+        const drawingDataUrl = exportLesson2Drawing();
+        preparedAnswers = {
+          q1: answers.g1_q1 ?? '',
+          q2Text: answers.g1_q2 ?? '',
+          q2Drawing: drawingDataUrl,
+          q3: answers.g1_q3 ?? ''
+        };
+
+        setResponseState((current) => ({
+          ...current,
+          lesson2: {
+            ...current.lesson2,
+            sections: {
+              ...current.lesson2.sections,
+              icebreak: {
+                ...current.lesson2.sections.icebreak,
+                q2Drawing: drawingDataUrl
+              }
+            }
+          }
+        }));
+      }
+
       const payload = {
         lesson: lessonKey,
         section: sectionKey,
         studentName: student.studentName,
         studentId: student.studentId,
-        answers,
+        answers: preparedAnswers,
         savedAt: new Date().toISOString()
       };
 
@@ -797,9 +947,10 @@ function App() {
         throw new Error(result.error || '저장에 실패했습니다.');
       }
 
+      const successMessage = lessonKey === 'lesson2' && sectionKey === 'icebreak' ? '생각열기 답안이 저장되었습니다.' : '응답이 저장되었습니다.';
       setSaveStatus((current) => ({
         ...current,
-        [statusKey]: { type: 'success', message: '응답이 저장되었습니다.' }
+        [statusKey]: { type: 'success', message: successMessage }
       }));
     } catch (error) {
       setSaveStatus((current) => ({
@@ -1456,12 +1607,44 @@ function App() {
                 <div className="question-form-grid">
                   {group.prompts.map((prompt, promptIndex) => {
                     const answerKey = `g${groupIndex + 1}_q${promptIndex + 1}`;
+                    const isLesson2IcebreakDrawing =
+                      lessonKey === 'lesson2' && sectionKey === 'icebreak' && groupIndex === 0 && promptIndex === 1;
+
                     return (
                       <article key={answerKey} className="question-card question-card--input">
                         <span className="info-item-badge">
                           {group.badgePrefix} {promptIndex + 1}
                         </span>
                         <h4>{prompt}</h4>
+                        {isLesson2IcebreakDrawing && (
+                          <div className="draw-card">
+                            <p className="support-text">아래 순환계 모식도 위에 혈액의 이동 방향을 화살표로 그려 보세요.</p>
+                            <div className="draw-container">
+                              <img
+                                ref={lesson2ImageRef}
+                                src={circulationDiagram}
+                                alt="순환계 모식도"
+                                className="draw-image"
+                                onLoad={syncLesson2CanvasSize}
+                              />
+                              <canvas
+                                ref={lesson2CanvasRef}
+                                className="draw-canvas"
+                                onMouseDown={handleLesson2CanvasMouseDown}
+                                onMouseUp={handleLesson2CanvasMouseUp}
+                                onMouseLeave={() => {
+                                  setLesson2IsDrawing(false);
+                                  setLesson2StartPoint(null);
+                                }}
+                              />
+                            </div>
+                            <div className="draw-toolbar">
+                              <button type="button" className="primary-button" onClick={resetLesson2Drawing}>
+                                다시 그리기
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         <textarea
                           className="response-textarea"
                           value={answers[answerKey] ?? ''}
@@ -1863,7 +2046,13 @@ function App() {
                   {Object.entries(item.answers || {}).map(([key, value]) => (
                     <div key={key} className="teacher-answer-item">
                       <strong>{key}</strong>
-                      <p>{String(value || '')}</p>
+                      {key === 'q2Drawing' && typeof value === 'string' && value.startsWith('data:image') ? (
+                        <div className="teacher-drawing-preview">
+                          <img src={value} alt="학생 순환계 화살표 그림" />
+                        </div>
+                      ) : (
+                        <p>{String(value || '')}</p>
+                      )}
                     </div>
                   ))}
                 </div>

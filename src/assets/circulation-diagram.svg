@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1100" viewBox="0 0 1100 1100" fill="none">
+  <rect width="1100" height="1100" fill="white"/>
+  <g stroke="#111" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M70 420V980H1030V300H600"/>
+    <path d="M70 420H480"/>
+    <path d="M600 420H980"/>
+    <path d="M470 530V240H320V105H780V240H630V530"/>
+    <path d="M550 405V640"/>
+    <path d="M500 810L440 860"/>
+    <path d="M600 810L660 860"/>
+  </g>
+  <g stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="#f0d5d8">
+    <ellipse cx="495" cy="102" rx="40" ry="58"/>
+    <ellipse cx="605" cy="102" rx="40" ry="58"/>
+    <ellipse cx="550" cy="735" rx="35" ry="35"/>
+    <path d="M550 760L500 820L485 975H615L600 820Z"/>
+  </g>
+  <g stroke="#111" stroke-width="4" stroke-linecap="round">
+    <path d="M465 75c25 10 45 18 70 22"/>
+    <path d="M465 112c25 10 45 18 70 22"/>
+    <path d="M565 75c-25 10-45 18-70 22"/>
+    <path d="M565 112c-25 10-45 18-70 22"/>
+    <path d="M505 855c18-10 32-16 44-18"/>
+    <path d="M595 855c-18-10-32-16-44-18"/>
+    <path d="M470 900c28 10 52 16 80 18"/>
+    <path d="M630 900c-28 10-52 16-80 18"/>
+  </g>
+  <path d="M430 470c20-58 68-90 120-90s100 32 120 90v88c0 38-16 71-41 95-20 19-48 31-79 31s-59-12-79-31c-25-24-41-57-41-95Z" fill="white" stroke="#111" stroke-width="6"/>
+</svg>

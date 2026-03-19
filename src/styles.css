@@ -863,3 +863,49 @@ select.text-input {
   font-weight: 700;
   white-space: nowrap;
 }
+
+.draw-card {
+  padding: 24px 0 8px;
+}
+
+.draw-container {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 20px auto;
+}
+
+.draw-image {
+  width: 100%;
+  display: block;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(98, 120, 181, 0.12);
+}
+
+.draw-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.draw-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.teacher-drawing-preview {
+  margin-top: 12px;
+}
+
+.teacher-drawing-preview img {
+  max-width: 280px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
