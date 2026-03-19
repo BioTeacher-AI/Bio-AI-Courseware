@@ -827,24 +827,28 @@ function App() {
 
       const preRows = extractRows(preJson);
       const postRows = extractRows(postJson);
-      const sampleRow = preRows[0] || postRows[0] || {};
+      const preSampleRow = preRows[0] || {};
+      const postSampleRow = postRows[0] || {};
 
-      const nameCol = findNameColumn(sampleRow);
-      const idCol = findStudentIdColumn(sampleRow);
-      const timeCol = findTimestampColumn(sampleRow);
+      const preNameCol = findNameColumn(preSampleRow);
+      const preIdCol = findStudentIdColumn(preSampleRow);
+      const preTimeCol = findTimestampColumn(preSampleRow);
+      const postNameCol = findNameColumn(postSampleRow);
+      const postIdCol = findStudentIdColumn(postSampleRow);
+      const postTimeCol = findTimestampColumn(postSampleRow);
 
-      if (!nameCol || !idCol || !timeCol) {
-        throw new Error('이름/학번/타임스탬프 컬럼을 자동으로 찾지 못했습니다.');
+      if (!preNameCol || !preIdCol || !preTimeCol || !postNameCol || !postIdCol || !postTimeCol) {
+        throw new Error('사전/사후 데이터에서 이름/학번/타임스탬프 컬럼을 자동으로 찾지 못했습니다.');
       }
 
-      const latestPre = findLatestMatchingRow(preRows, trimmedName, trimmedStudentId, nameCol, idCol, timeCol);
-      const latestPost = findLatestMatchingRow(postRows, trimmedName, trimmedStudentId, nameCol, idCol, timeCol);
+      const latestPre = findLatestMatchingRow(preRows, trimmedName, trimmedStudentId, preNameCol, preIdCol, preTimeCol);
+      const latestPost = findLatestMatchingRow(postRows, trimmedName, trimmedStudentId, postNameCol, postIdCol, postTimeCol);
 
       if (!latestPre || !latestPost) {
         throw new Error('이름과 학번이 모두 일치하는 사전/사후 검사 응답을 찾지 못했습니다.');
       }
 
-      const excluded = new Set([nameCol, idCol, timeCol]);
+      const excluded = new Set([preNameCol, preIdCol, preTimeCol, postNameCol, postIdCol, postTimeCol]);
       const sharedQuestionKeys = Object.keys(latestPre).filter(
         (key) =>
           !excluded.has(key) &&
@@ -887,8 +891,8 @@ function App() {
         student: {
           name: trimmedName,
           studentId: trimmedStudentId,
-          preTimestamp: latestPre[timeCol],
-          postTimestamp: latestPost[timeCol]
+          preTimestamp: latestPre[preTimeCol],
+          postTimestamp: latestPost[postTimeCol]
         },
         summary: {
           questionCount: items.length,
@@ -899,7 +903,15 @@ function App() {
           sameCount,
           worsenedCount
         },
-        items
+        items,
+        preDebug: {
+          timestamp: latestPre[preTimeCol],
+          row: latestPre
+        },
+        postDebug: {
+          timestamp: latestPost[postTimeCol],
+          row: latestPost
+        }
       });
       setSortMode('original');
     } catch (error) {
@@ -1110,6 +1122,28 @@ function App() {
                 <article className="metric-card">
                   <span>사후 응답 시각</span>
                   <strong>{formatDateTime(compareResult.student.postTimestamp)}</strong>
+                </article>
+              </div>
+            </section>
+
+            <section className="card detail-card">
+              <div className="section-heading section-heading--stacked compact-gap">
+                <div>
+                  <span className="section-tag">임시 디버그</span>
+                  <h3>사전/사후 매칭 row 확인</h3>
+                </div>
+                <p>사전/사후가 실제로 서로 다른 row인지 화면에서 바로 확인할 수 있도록 디버그 정보를 표시합니다.</p>
+              </div>
+              <div className="debug-grid">
+                <article className="debug-card">
+                  <h4>Pre Debug</h4>
+                  <p className="support-text">timestamp: {formatDateTime(compareResult.preDebug?.timestamp)}</p>
+                  <pre className="debug-pre">{JSON.stringify(compareResult.preDebug?.row || {}, null, 2)}</pre>
+                </article>
+                <article className="debug-card">
+                  <h4>Post Debug</h4>
+                  <p className="support-text">timestamp: {formatDateTime(compareResult.postDebug?.timestamp)}</p>
+                  <pre className="debug-pre">{JSON.stringify(compareResult.postDebug?.row || {}, null, 2)}</pre>
                 </article>
               </div>
             </section>
