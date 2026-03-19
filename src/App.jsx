@@ -240,6 +240,11 @@ const detailedLessonData = {
       '마라톤 선수가 먹은 바나나가 어떻게 근육을 움직이는 에너지가 될까요?',
       '소화되고 남은 물질은 어떻게 우리 몸을 빠져나올까요?'
     ],
+    summaryQuestions: [
+      '세포 호흡의 관점에서 소화계가 하는 역할은?',
+      '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 소화계는 어떤 도움을 주어야 할지 적어봅시다.',
+      '오늘 수업을 통해 생각이 변화된 것이 있다면 자유롭게 적어주세요.'
+    ],
     experimentBanner: '실험 과정 영상이 추후 연결될 예정입니다.',
     experiments: [
       {
@@ -380,6 +385,12 @@ const detailedLessonData = {
       '마라톤 선수들은 어떻게 지치지 않고 계속해서 달릴 수 있을까요?',
       '위 그림을 보고, 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 화살표 방향을 떠올려 설명해 보세요.',
       '모식도에 나와 있는 각 혈관의 명칭과 그 혈관을 지나는 혈액의 산소의 양도 함께 표시해 봅시다.'
+    ],
+    summaryQuestions: [
+      '세포 호흡의 관점에서 순환계가 하는 역할은?',
+      '세포 호흡의 관점에서 호흡계가 하는 역할은?',
+      '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 순환계와 호흡계는 각각 어떤 도움을 주어야 할지 적어봅시다.',
+      '오늘 수업을 통해 생각이 변화된 것이 있다면 자유롭게 적어주세요.'
     ],
     experimentBanner: '실험 과정 카드뉴스 또는 영상이 추후 연결될 예정입니다.',
     experiments: [
@@ -540,6 +551,11 @@ const detailedLessonData = {
       '세포 호흡의 결과물인 ‘요소’와 같은 노폐물이 혈액에 계속 쌓인다면, 우리 몸 전체에 어떤 문제가 생길까요?',
       '마라톤 선수가 바나나를 먹고 소화 과정을 통해 우리 몸으로 흡수된 영양소가 세포에서 사용되고 생성된 물질은 어떻게 우리 몸을 빠져나올까요?'
     ],
+    summaryQuestions: [
+      '세포 호흡의 관점에서 배설계가 하는 역할은?',
+      '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 배설계는 어떤 도움을 주어야 할지 적어봅시다.',
+      '오늘 수업을 통해 생각이 변화된 것이 있다면 자유롭게 적어주세요.'
+    ],
     extraInfoItems: [
       '호흡 속도와 심장박동 속도가 빨라져 근육에서 에너지를 효율적으로 얻을 수 있다.',
       '많은 에너지가 소비되므로 일정 지점마다 제공되는 음식물(바나나 등)을 먹고 소화한다.',
@@ -679,9 +695,8 @@ const createEmptyResponses = () => {
   Object.entries(detailedLessonData).forEach(([lessonKey, lesson]) => {
     entries[lessonKey] = { studentName: '', studentId: '', sections: {} };
 
-    ['icebreak', 'predict', 'observe', 'explain'].forEach((sectionKey) => {
-      const section = lesson.responseSections[sectionKey];
-      if (!section) return;
+    Object.entries(lesson.responseSections || {}).forEach(([sectionKey, section]) => {
+      if (!section?.groups) return;
 
       const answers = {};
       section.groups.forEach((group, groupIndex) => {
@@ -1611,11 +1626,15 @@ function App() {
     );
   };
 
-  const renderResponseSection = (lessonKey, sectionKey) => {
+  const renderResponseSection = (lessonKey, sectionKey, sectionOverride = null) => {
     const lesson = detailedLessonData[lessonKey];
-    const section = lesson.responseSections[sectionKey];
-    const answers = responseState[lessonKey].sections[sectionKey];
+    const section = sectionOverride || lesson.responseSections[sectionKey];
+    const answers = responseState[lessonKey]?.sections?.[sectionKey] ?? {};
     const status = saveStatus[`${lessonKey}-${sectionKey}`];
+
+    if (!section?.groups?.length) {
+      return null;
+    }
 
     return (
       <div className="lesson-detail-stack">
@@ -1826,6 +1845,31 @@ function App() {
     );
   };
 
+  const renderSummarySection = (lessonKey) => {
+    const lesson = detailedLessonData[lessonKey];
+    const summaryQuestions = lesson?.summaryQuestions || [];
+    const summarySection = lesson?.responseSections?.summary;
+
+    if (!summarySection) {
+      return null;
+    }
+
+    const sectionOverride =
+      summaryQuestions.length > 0
+        ? {
+            ...summarySection,
+            groups: [
+              {
+                ...(summarySection.groups?.[0] || { title: '정리하기', badgePrefix: '정리' }),
+                prompts: summaryQuestions
+              }
+            ]
+          }
+        : summarySection;
+
+    return renderResponseSection(lessonKey, 'summary', sectionOverride);
+  };
+
   const renderDetailedLesson = (lessonKey) => {
     const lesson = detailedLessonData[lessonKey];
 
@@ -1968,7 +2012,7 @@ function App() {
     }
 
     if (activeSubTab === 'summary') {
-      return renderResponseSection(lessonKey, 'summary');
+      return renderSummarySection(lessonKey);
     }
 
     if (activeSubTab === 'ai') {
