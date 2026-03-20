@@ -736,6 +736,11 @@ function App() {
   const [searchStudentId, setSearchStudentId] = useState('');
   const [prePayload, setPrePayload] = useState(EMPTY_DATASET_PAYLOAD);
   const [postPayload, setPostPayload] = useState(EMPTY_DATASET_PAYLOAD);
+  const [posttestName, setPosttestName] = useState('');
+  const [posttestStudentId, setPosttestStudentId] = useState('');
+  const [posttestVerified, setPosttestVerified] = useState(false);
+  const [posttestVerifying, setPosttestVerifying] = useState(false);
+  const [posttestVerificationMessage, setPosttestVerificationMessage] = useState({ type: '', text: '' });
   const [compareResult, setCompareResult] = useState(null);
   const [compareError, setCompareError] = useState('');
   const [compareLoading, setCompareLoading] = useState(false);
@@ -1048,6 +1053,92 @@ function App() {
     return { nextPrePayload, nextPostPayload };
   };
 
+
+  const handlePosttestFieldChange = (field, value) => {
+    const trimmedResetNeeded = posttestVerified || posttestVerificationMessage.text;
+
+    if (field === 'name') {
+      setPosttestName(value);
+    }
+
+    if (field === 'studentId') {
+      setPosttestStudentId(value);
+    }
+
+    if (trimmedResetNeeded) {
+      setPosttestVerified(false);
+      setPosttestVerificationMessage({ type: '', text: '' });
+    }
+  };
+
+  const verifyPosttestEligibility = async () => {
+    const studentName = posttestName.trim();
+    const studentId = posttestStudentId.trim();
+
+    if (!studentName || !studentId) {
+      const message = '이름과 학번을 모두 입력해주세요.';
+      setPosttestVerified(false);
+      setPosttestVerificationMessage({ type: 'error', text: message });
+      if (typeof window !== 'undefined') {
+        window.alert(message);
+      }
+      return;
+    }
+
+    setPosttestVerifying(true);
+    setPosttestVerificationMessage({ type: 'loading', text: '사전 검사 데이터를 확인하는 중입니다...' });
+
+    try {
+      const response = await fetch('/.netlify/functions/proxy?dataset=pre', { cache: 'no-store' });
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json?.error || '사전 검사 데이터를 불러오지 못했습니다.');
+      }
+
+      const normalizedPrePayload = normalizePayload(json, 'pre');
+      const rows = normalizedPrePayload?.data || [];
+      setPrePayload(normalizedPrePayload);
+
+      if (!rows.length) {
+        throw new Error('사전 검사 데이터가 없습니다. 먼저 사전 검사를 완료해주세요.');
+      }
+
+      const sampleRow = rows[0] || {};
+      const nameCol = findColumn(sampleRow, ['이름']);
+      const studentCol = findColumn(sampleRow, ['학번']);
+
+      if (!nameCol || !studentCol) {
+        throw new Error('사전 검사 데이터에서 이름 또는 학번 항목을 찾지 못했습니다.');
+      }
+
+      const matched = rows.find(
+        (item) => String(item?.[nameCol] ?? '').trim() === studentName && String(item?.[studentCol] ?? '').trim() === studentId
+      );
+
+      if (matched) {
+        setPosttestVerified(true);
+        setPosttestVerificationMessage({ type: 'success', text: '사전 검사 확인이 완료되었습니다. 사후 검사를 진행하세요.' });
+        return;
+      }
+
+      const message = '사전 검사 데이터가 없습니다. 먼저 사전 검사를 완료해주세요.';
+      setPosttestVerified(false);
+      setPosttestVerificationMessage({ type: 'error', text: '사전 검사를 완료한 학생만 사후 검사에 참여할 수 있습니다.' });
+      if (typeof window !== 'undefined') {
+        window.alert(message);
+      }
+    } catch (error) {
+      setPosttestVerified(false);
+      setPosttestVerificationMessage({
+        type: 'error',
+        text: error.message || '사전 검사 데이터를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.'
+      });
+    } finally {
+      setPosttestVerifying(false);
+    }
+  };
+
   const runComparison = async () => {
     const cleanName = searchName.trim();
     const cleanStudentId = searchStudentId.trim();
@@ -1293,6 +1384,86 @@ function App() {
       <section className="card survey-card">
         <iframe src={embedUrl} title={title} className="survey-iframe" />
       </section>
+    </div>
+  );
+
+  const renderPosttestPanel = ({ title, description, openUrl, embedUrl }) => (
+    <div className="page-stack">
+      <section className="card survey-card">
+        <div className="survey-head">
+          <div>
+            <span className="section-tag">설문 참여</span>
+            <h2>{title}</h2>
+          </div>
+          {posttestVerified ? (
+            <a href={openUrl} target="_blank" rel="noopener noreferrer" className="primary-button ghost-link">
+              새 창에서 열기
+            </a>
+          ) : null}
+        </div>
+        <p className="body-text">{description}</p>
+
+        <div className="lesson-detail-stack lesson-detail-stack--compact">
+          <section className="card nested-section-card">
+            <div className="section-heading section-heading--stacked compact-gap">
+              <div>
+                <span className="section-tag">사전 검사 확인</span>
+                <h3>이름과 학번 확인</h3>
+              </div>
+              <p>사후 검사는 사전 검사를 완료한 학생만 참여할 수 있습니다. 이름과 학번을 입력한 뒤 확인해 주세요.</p>
+            </div>
+
+            <div className="student-info-grid">
+              <label className="field-label">
+                <span>이름</span>
+                <input
+                  type="text"
+                  value={posttestName}
+                  onChange={(event) => handlePosttestFieldChange('name', event.target.value)}
+                  placeholder="이름"
+                  className="text-input"
+                />
+              </label>
+              <label className="field-label">
+                <span>학번</span>
+                <input
+                  type="text"
+                  value={posttestStudentId}
+                  onChange={(event) => handlePosttestFieldChange('studentId', event.target.value)}
+                  placeholder="학번"
+                  className="text-input"
+                />
+              </label>
+            </div>
+
+            <div className="save-row">
+              <button type="button" className="primary-button" onClick={verifyPosttestEligibility} disabled={posttestVerifying}>
+                {posttestVerifying ? '확인 중...' : '사전 검사 확인'}
+              </button>
+              {!posttestVerified && (
+                <button type="button" className="primary-button ghost-link" onClick={() => setActiveTopTab('pretest')}>
+                  사전 검사 하러 가기
+                </button>
+              )}
+              {posttestVerificationMessage.text && (
+                <span className={`status-message status-message--${posttestVerificationMessage.type || 'loading'}`}>
+                  {posttestVerificationMessage.text}
+                </span>
+              )}
+            </div>
+          </section>
+        </div>
+      </section>
+
+      {posttestVerified ? (
+        <section className="card survey-card">
+          <iframe src={embedUrl} title={title} className="survey-iframe" />
+        </section>
+      ) : (
+        <section className="card survey-card">
+          <div className="placeholder-panel">사전 검사를 완료한 학생만 사후 검사에 참여할 수 있습니다.</div>
+        </section>
+      )}
     </div>
   );
 
@@ -2181,7 +2352,7 @@ function App() {
       return renderFormPanel(formPanels.pretest);
     }
     if (activeTopTab === 'posttest') {
-      return renderFormPanel(formPanels.posttest);
+      return renderPosttestPanel(formPanels.posttest);
     }
     if (activeTopTab === 'progress') return renderProgressDashboard();
     if (isLessonTab) return renderLesson();
