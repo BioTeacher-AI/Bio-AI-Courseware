@@ -1205,10 +1205,7 @@ function App() {
         <div className="hero-copy">
           <span className="section-tag">Student Courseware Preview</span>
           <h2>기관계의 통합적 작용 AI 코스웨어</h2>
-          <p>
-            이 코스웨어는 기관계의 통합적 작용을 주제로 한 3차시 POE 기반 학습 프로그램입니다.
-            현재 버전은 학생 입력, 저장, 교사용 확인 흐름까지 포함한 Netlify 배포용 구조입니다.
-          </p>
+          <p>이 코스웨어는 기관계의 통합적 작용을 주제로 한 3차시 POE 기반 학습 프로그램입니다.</p>
         </div>
       </section>
 
@@ -1236,7 +1233,6 @@ function App() {
       <section className="card shortcuts-card">
         <div className="section-heading">
           <div>
-            <span className="section-tag">바로가기</span>
             <h3>주요 탭 빠르게 이동</h3>
           </div>
           <p>학생용 입력 화면과 교사용 확인 화면을 빠르게 이동할 수 있습니다.</p>
@@ -2197,12 +2193,8 @@ function App() {
       <header className="app-header">
         <div>
           <span className="app-badge">AI Courseware Structure Preview</span>
-          <h1>학생용 AI 코스웨어 전체 구조 확인</h1>
+          <h1>기관계(소화, 순환, 호흡, 배설) AI 코스웨어</h1>
         </div>
-        <p className="app-subtitle">
-          학생 입력, 저장, 교사용 확인 흐름까지 포함한 상태로 상단 메인 탭과 차시별 서브탭 구조를 검토할 수 있도록
-          구성했습니다.
-        </p>
       </header>
 
       <nav className="top-tab-bar" aria-label="상단 메인 탭">
