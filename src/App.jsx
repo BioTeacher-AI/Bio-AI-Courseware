@@ -62,24 +62,53 @@ const teacherSectionOptions = [
   { id: 'summary', label: '정리하기' }
 ];
 
-const formPanels = {
-  pretest: {
-    title: '사전 검사',
-    description: '수업 시작 전 기관계 관련 사전 개념 검사를 Google Form으로 진행합니다.',
-    openUrl:
-      'https://docs.google.com/forms/d/e/1FAIpQLSeOZ6vmd6q3VrnmjTpkJ4xJTUaIJx_qhkBLdVLvS1CnHpWBOg/viewform',
-    embedUrl:
-      'https://docs.google.com/forms/d/e/1FAIpQLSeOZ6vmd6q3VrnmjTpkJ4xJTUaIJx_qhkBLdVLvS1CnHpWBOg/viewform?embedded=true'
+const preSurveyForms = [
+  {
+    key: 'conceptPre',
+    title: '기관계 개념 사전 검사',
+    description: '1차시 수업 전 기관계 관련 사전 개념 검사를 실시하는 영역입니다.',
+    openUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSeOZ6vmd6q3VrnmjTpkJ4xJTUaIJx_qhkBLdVLvS1CnHpWBOg/viewform',
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSeOZ6vmd6q3VrnmjTpkJ4xJTUaIJx_qhkBLdVLvS1CnHpWBOg/viewform?embedded=true'
   },
-  posttest: {
-    title: '사후 검사',
-    description: '3차시 수업 후 기관계 관련 사후 개념 검사를 Google Form으로 진행합니다.',
-    openUrl:
-      'https://docs.google.com/forms/d/e/1FAIpQLSdt9GfLprmm4oTSS-7PdsxT34bx4o5UlUSz-Xi5TJb0ocQUjA/viewform',
-    embedUrl:
-      'https://docs.google.com/forms/d/e/1FAIpQLSdt9GfLprmm4oTSS-7PdsxT34bx4o5UlUSz-Xi5TJb0ocQUjA/viewform?embedded=true'
+  {
+    key: 'motivationPre',
+    title: '과학 활동 동기 사전 검사',
+    description: 'AI 코스웨어 활용 전 과학 활동에 대한 동기 수준을 확인하는 검사입니다.',
+    openUrl: 'https://script.google.com/macros/s/AKfycby8eqMOH1iEEO1kteUcofdJecRHIES_2AwgOX-7YgVjk3EJFxOGfotBlGPLbRkHqVkNXg/exec',
+    embedUrl: 'https://script.google.com/macros/s/AKfycby8eqMOH1iEEO1kteUcofdJecRHIES_2AwgOX-7YgVjk3EJFxOGfotBlGPLbRkHqVkNXg/exec'
+  },
+  {
+    key: 'taskPre',
+    title: '과제집착 사전 검사',
+    description: 'AI 코스웨어 활용 전 과제 수행 과정에서의 집착 및 지속성을 확인하는 검사입니다.',
+    openUrl: 'https://script.google.com/macros/s/AKfycbxR3ALVWeTCKlYCSTADc7bFy4ssaBAufFlbEMT9f7sC5cnZJeRSvaVVpJW44jCAS6DZ/exec',
+    embedUrl: 'https://script.google.com/macros/s/AKfycbxR3ALVWeTCKlYCSTADc7bFy4ssaBAufFlbEMT9f7sC5cnZJeRSvaVVpJW44jCAS6DZ/exec'
   }
-};
+];
+
+const postSurveyForms = [
+  {
+    key: 'conceptPost',
+    title: '기관계 개념 사후 검사',
+    description: '3차시 수업 후 기관계 관련 사후 개념 검사를 실시하는 영역입니다.',
+    openUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdt9GfLprmm4oTSS-7PdsxT34bx4o5UlUSz-Xi5TJb0ocQUjA/viewform',
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdt9GfLprmm4oTSS-7PdsxT34bx4o5UlUSz-Xi5TJb0ocQUjA/viewform?embedded=true'
+  },
+  {
+    key: 'motivationPost',
+    title: '과학 활동 동기 사후 검사',
+    description: 'AI 코스웨어 활용 후 과학 활동에 대한 동기 변화를 확인하는 검사입니다.',
+    openUrl: 'https://script.google.com/macros/s/AKfycbw_FcnYCxP4z4e-pOJO7-e3L1Bp7rEOzRHto8SE40vBcKCfDubJDb39e4YHV3YBxCxr/exec',
+    embedUrl: 'https://script.google.com/macros/s/AKfycbw_FcnYCxP4z4e-pOJO7-e3L1Bp7rEOzRHto8SE40vBcKCfDubJDb39e4YHV3YBxCxr/exec'
+  },
+  {
+    key: 'taskPost',
+    title: '과제집착 사후 검사',
+    description: 'AI 코스웨어 활용 후 과제 수행 과정에서의 집착 및 지속성 변화를 확인하는 검사입니다.',
+    openUrl: 'https://script.google.com/macros/s/AKfycby48j8DJUydxpubzm2OaUq1ZhEwUDGa9pB1zcEsFnGj8O6NalZRH8c_Yn0jBRP_Z1FjTw/exec',
+    embedUrl: 'https://script.google.com/macros/s/AKfycby48j8DJUydxpubzm2OaUq1ZhEwUDGa9pB1zcEsFnGj8O6NalZRH8c_Yn0jBRP_Z1FjTw/exec'
+  }
+];
 
 const EMPTY_DATASET_PAYLOAD = { dataset: '', sheetName: '', count: 0, data: [] };
 
@@ -1366,53 +1395,39 @@ function App() {
     </div>
   );
 
-  const renderFormPanel = ({ title, description, openUrl, embedUrl }) => (
-    <div className="page-stack">
-      <section className="card survey-card">
-        <div className="survey-head">
-          <div>
-            <span className="section-tag">설문 참여</span>
-            <h2>{title}</h2>
-          </div>
-          <a href={openUrl} target="_blank" rel="noopener noreferrer" className="primary-button ghost-link">
-            새 창에서 열기
-          </a>
+  const renderSingleFormCard = ({ key, title, description, openUrl, embedUrl }) => (
+    <section key={key} className="card survey-card">
+      <div className="survey-head">
+        <div>
+          <span className="section-tag">설문 참여</span>
+          <h2>{title}</h2>
         </div>
-        <p className="body-text">{description}</p>
-      </section>
-
-      <section className="card survey-card">
-        <iframe src={embedUrl} title={title} className="survey-iframe" />
-      </section>
-    </div>
+        <a href={openUrl} target="_blank" rel="noopener noreferrer" className="primary-button ghost-link">
+          새 창에서 열기
+        </a>
+      </div>
+      <p className="body-text">{description}</p>
+      <iframe src={embedUrl} title={title} className="survey-iframe" loading="lazy" />
+    </section>
   );
 
-  const renderPosttestPanel = ({ title, description, openUrl, embedUrl }) => (
+  const renderSurveyGroup = (forms) => <div className="survey-stack">{forms.map((form) => renderSingleFormCard(form))}</div>;
+
+  const renderPretestPanel = () => <div className="page-stack">{renderSurveyGroup(preSurveyForms)}</div>;
+
+  const renderPosttestPanel = () => (
     <div className="page-stack">
       <section className="card survey-card">
-        <div className="survey-head">
+        <div className="section-heading section-heading--stacked compact-gap">
           <div>
-            <span className="section-tag">설문 참여</span>
-            <h2>{title}</h2>
+            <span className="section-tag">사전 검사 확인</span>
+            <h2>사후 검사 참여 확인</h2>
           </div>
-          {posttestVerified ? (
-            <a href={openUrl} target="_blank" rel="noopener noreferrer" className="primary-button ghost-link">
-              새 창에서 열기
-            </a>
-          ) : null}
+          <p>사후 검사는 사전 검사를 완료한 학생만 참여할 수 있습니다. 이름과 학번을 입력한 뒤 확인해 주세요.</p>
         </div>
-        <p className="body-text">{description}</p>
 
         <div className="lesson-detail-stack lesson-detail-stack--compact">
           <section className="card nested-section-card">
-            <div className="section-heading section-heading--stacked compact-gap">
-              <div>
-                <span className="section-tag">사전 검사 확인</span>
-                <h3>이름과 학번 확인</h3>
-              </div>
-              <p>사후 검사는 사전 검사를 완료한 학생만 참여할 수 있습니다. 이름과 학번을 입력한 뒤 확인해 주세요.</p>
-            </div>
-
             <div className="student-info-grid">
               <label className="field-label">
                 <span>이름</span>
@@ -1456,9 +1471,7 @@ function App() {
       </section>
 
       {posttestVerified ? (
-        <section className="card survey-card">
-          <iframe src={embedUrl} title={title} className="survey-iframe" />
-        </section>
+        renderSurveyGroup(postSurveyForms)
       ) : (
         <section className="card survey-card">
           <div className="placeholder-panel">사전 검사를 완료한 학생만 사후 검사에 참여할 수 있습니다.</div>
@@ -2349,10 +2362,10 @@ function App() {
   const renderContent = () => {
     if (activeTopTab === 'home') return renderHome();
     if (activeTopTab === 'pretest') {
-      return renderFormPanel(formPanels.pretest);
+      return renderPretestPanel();
     }
     if (activeTopTab === 'posttest') {
-      return renderPosttestPanel(formPanels.posttest);
+      return renderPosttestPanel();
     }
     if (activeTopTab === 'progress') return renderProgressDashboard();
     if (isLessonTab) return renderLesson();
