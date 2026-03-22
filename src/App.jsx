@@ -494,7 +494,7 @@ const detailedLessonData = {
         description: '각 실험에서 측정하거나 관찰한 값을 기록해 봅시다.',
         groups: [
           {
-            title: '실험 1',
+            title: '순환계 실험 결과 관찰',
             badgePrefix: '관찰',
             prompts: [
               '안정 시 심박수 1회',
@@ -506,7 +506,7 @@ const detailedLessonData = {
             ]
           },
           {
-            title: '실험 2',
+            title: '호흡계 실험 결과 관찰',
             badgePrefix: '관찰',
             prompts: ['평상시 BTB 변색 시간', '운동 직후 BTB 변색 시간']
           }
@@ -939,6 +939,19 @@ function App() {
       [lessonKey]: subTabId
     }));
   };
+
+  const getNextSubTab = (lessonKey, currentSubTabId = lessonTabState[lessonKey]) => {
+    const tabs = lessonSubTabsMap[lessonKey] || [];
+    const currentIndex = tabs.findIndex((tab) => tab.id === currentSubTabId);
+    return currentIndex >= 0 ? tabs[currentIndex + 1] || null : null;
+  };
+
+  const moveToNextSubTab = (lessonKey, currentSubTabId = lessonTabState[lessonKey]) => {
+    const nextTab = getNextSubTab(lessonKey, currentSubTabId);
+    if (!nextTab) return;
+    handleSubTabChange(lessonKey, nextTab.id);
+  };
+
 
   const handleStudentFieldChange = (lessonKey, field, value) => {
     setResponseState((current) => ({
@@ -1935,6 +1948,28 @@ function App() {
     </div>
   );
 
+
+  const renderNextStepButton = (lessonKey) => {
+    const currentSubTabId = lessonTabState[lessonKey];
+    const nextTab = getNextSubTab(lessonKey, currentSubTabId);
+
+    if (!nextTab) {
+      return null;
+    }
+
+    return (
+      <div className="next-step-row">
+        <button
+          type="button"
+          className="primary-button next-step-button"
+          onClick={() => moveToNextSubTab(lessonKey, currentSubTabId)}
+        >
+          다음: {nextTab.label}
+        </button>
+      </div>
+    );
+  };
+
   const renderAITutor = (lessonKey) => {
     const labels = {
       lesson1: '1차시 AI 보조교사 실행하기',
@@ -2077,11 +2112,12 @@ function App() {
 
   const renderDetailedLesson = (lessonKey) => {
     const lesson = detailedLessonData[lessonKey];
+    let content = null;
 
     if (activeSubTab === 'review') {
-      return (
+      content = (
         <div className="lesson-detail-stack">
-          <section className="card detail-card">
+          <section className="card detail-card accent-card accent-card--review">
             <div className="section-heading section-heading--stacked compact-gap">
               <div>
                 <span className="section-tag">이전 차시 학습 확인</span>
@@ -2100,12 +2136,10 @@ function App() {
           </section>
         </div>
       );
-    }
-
-    if (activeSubTab === 'goal') {
-      return (
+    } else if (activeSubTab === 'goal') {
+      content = (
         <div className="lesson-detail-stack">
-          <section className="card detail-card">
+          <section className="card detail-card accent-card accent-card--goal">
             <div className="section-heading section-heading--stacked compact-gap">
               <div>
                 <span className="section-tag">{lesson.goalBadge}</span>
@@ -2124,12 +2158,10 @@ function App() {
           </section>
         </div>
       );
-    }
-
-    if (activeSubTab === 'video' && lesson.videos) {
-      return (
+    } else if (activeSubTab === 'video' && lesson.videos) {
+      content = (
         <div className="lesson-detail-stack">
-          <section className="card detail-card">
+          <section className="card detail-card accent-card accent-card--media">
             <div className="section-heading section-heading--stacked compact-gap">
               <div>
                 <span className="section-tag">{lesson.videoTitle}</span>
@@ -2155,17 +2187,13 @@ function App() {
           </section>
         </div>
       );
-    }
-
-    if (activeSubTab === 'icebreak') {
+    } else if (activeSubTab === 'icebreak') {
       const contentAfterHeader = lessonKey === 'lesson3' ? renderLesson3IcebreakResources() : null;
-      return renderResponseSection(lessonKey, 'icebreak', null, contentAfterHeader);
-    }
-
-    if (activeSubTab === 'experiment') {
-      return (
+      content = renderResponseSection(lessonKey, 'icebreak', null, contentAfterHeader);
+    } else if (activeSubTab === 'experiment') {
+      content = (
         <div className="lesson-detail-stack">
-          <section className="card detail-card">
+          <section className="card detail-card accent-card accent-card--experiment">
             <div className="section-heading section-heading--stacked compact-gap">
               <div>
                 <span className="section-tag">실험 안내</span>
@@ -2177,29 +2205,28 @@ function App() {
           </section>
         </div>
       );
+    } else if (activeSubTab === 'predict') {
+      content = renderResponseSection(lessonKey, 'predict');
+    } else if (activeSubTab === 'observe') {
+      content = renderResponseSection(lessonKey, 'observe');
+    } else if (activeSubTab === 'explain') {
+      content = renderResponseSection(lessonKey, 'explain');
+    } else if (activeSubTab === 'summary') {
+      content = renderSummarySection(lessonKey);
+    } else if (activeSubTab === 'ai') {
+      content = renderAITutor(lessonKey);
     }
 
-    if (activeSubTab === 'predict') {
-      return renderResponseSection(lessonKey, 'predict');
+    if (!content) {
+      return null;
     }
 
-    if (activeSubTab === 'observe') {
-      return renderResponseSection(lessonKey, 'observe');
-    }
-
-    if (activeSubTab === 'explain') {
-      return renderResponseSection(lessonKey, 'explain');
-    }
-
-    if (activeSubTab === 'summary') {
-      return renderSummarySection(lessonKey);
-    }
-
-    if (activeSubTab === 'ai') {
-      return renderAITutor(lessonKey);
-    }
-
-    return null;
+    return (
+      <div className="lesson-tab-stage">
+        {content}
+        {renderNextStepButton(lessonKey)}
+      </div>
+    );
   };
 
   const renderLesson = () => (
@@ -2209,7 +2236,7 @@ function App() {
         <h2>{activeLesson.title}</h2>
         <p>{activeLesson.summary}</p>
         <div className="subtab-list">
-          {lessonTabs.map((tab) => {
+          {lessonTabs.map((tab, index) => {
             const isActive = activeSubTab === tab.id;
             return (
               <button
@@ -2218,7 +2245,8 @@ function App() {
                 className={`subtab-button ${isActive ? 'active' : ''}`}
                 onClick={() => handleSubTabChange(activeTopTab, tab.id)}
               >
-                {tab.label}
+                <span className="subtab-step-number">{index + 1}</span>
+                <span className="subtab-label">{tab.label}</span>
               </button>
             );
           })}
