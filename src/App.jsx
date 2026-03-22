@@ -74,15 +74,15 @@ const preSurveyForms = [
     key: 'motivationPre',
     title: '과학 활동 동기 사전 검사',
     description: 'AI 코스웨어 활용 전 과학 활동에 대한 동기 수준을 확인하는 검사입니다.',
-    openUrl: 'https://script.google.com/macros/s/AKfycby8eqMOH1iEEO1kteUcofdJecRHIES_2AwgOX-7YgVjk3EJFxOGfotBlGPLbRkHqVkNXg/exec',
-    embedUrl: 'https://script.google.com/macros/s/AKfycby8eqMOH1iEEO1kteUcofdJecRHIES_2AwgOX-7YgVjk3EJFxOGfotBlGPLbRkHqVkNXg/exec'
+    openUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSc_eqGWHYL4Ia947Sjl7DBW-wxaAOwoYHGT5eOTeY65aVlKGg/viewform',
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSc_eqGWHYL4Ia947Sjl7DBW-wxaAOwoYHGT5eOTeY65aVlKGg/viewform?embedded=true'
   },
   {
     key: 'taskPre',
     title: '과제집착 사전 검사',
     description: 'AI 코스웨어 활용 전 과제 수행 과정에서의 집착 및 지속성을 확인하는 검사입니다.',
-    openUrl: 'https://script.google.com/macros/s/AKfycbxR3ALVWeTCKlYCSTADc7bFy4ssaBAufFlbEMT9f7sC5cnZJeRSvaVVpJW44jCAS6DZ/exec',
-    embedUrl: 'https://script.google.com/macros/s/AKfycbxR3ALVWeTCKlYCSTADc7bFy4ssaBAufFlbEMT9f7sC5cnZJeRSvaVVpJW44jCAS6DZ/exec'
+    openUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScgSrR6uZPNR_LVf2jmOQA3haEI4KSrkLYKGkyuQz2uxn7UhQ/viewform',
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScgSrR6uZPNR_LVf2jmOQA3haEI4KSrkLYKGkyuQz2uxn7UhQ/viewform?embedded=true'
   }
 ];
 
@@ -98,15 +98,15 @@ const postSurveyForms = [
     key: 'motivationPost',
     title: '과학 활동 동기 사후 검사',
     description: 'AI 코스웨어 활용 후 과학 활동에 대한 동기 변화를 확인하는 검사입니다.',
-    openUrl: 'https://script.google.com/macros/s/AKfycbw_FcnYCxP4z4e-pOJO7-e3L1Bp7rEOzRHto8SE40vBcKCfDubJDb39e4YHV3YBxCxr/exec',
-    embedUrl: 'https://script.google.com/macros/s/AKfycbw_FcnYCxP4z4e-pOJO7-e3L1Bp7rEOzRHto8SE40vBcKCfDubJDb39e4YHV3YBxCxr/exec'
+    openUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScGZSFcyAzUNhffsPcVFkBqG49UX3Ap8oKMM8nwGkHmyNQnRQ/viewform',
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScGZSFcyAzUNhffsPcVFkBqG49UX3Ap8oKMM8nwGkHmyNQnRQ/viewform?embedded=true'
   },
   {
     key: 'taskPost',
     title: '과제집착 사후 검사',
     description: 'AI 코스웨어 활용 후 과제 수행 과정에서의 집착 및 지속성 변화를 확인하는 검사입니다.',
-    openUrl: 'https://script.google.com/macros/s/AKfycby48j8DJUydxpubzm2OaUq1ZhEwUDGa9pB1zcEsFnGj8O6NalZRH8c_Yn0jBRP_Z1FjTw/exec',
-    embedUrl: 'https://script.google.com/macros/s/AKfycby48j8DJUydxpubzm2OaUq1ZhEwUDGa9pB1zcEsFnGj8O6NalZRH8c_Yn0jBRP_Z1FjTw/exec'
+    openUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSc324hyh92jaYiQ3srwrCGi80MvOGmnEuKLOcnNLsDsmtn8Eg/viewform',
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSc324hyh92jaYiQ3srwrCGi80MvOGmnEuKLOcnNLsDsmtn8Eg/viewform?embedded=true'
   }
 ];
 
