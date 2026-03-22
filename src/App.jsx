@@ -1928,6 +1928,44 @@ function App() {
 
 
 
+
+  const getLessonTutorLabel = (lessonKey) => {
+    const labels = {
+      lesson1: '1차시 AI 보조교사 실행하기',
+      lesson2: '2차시 AI 보조교사 실행하기',
+      lesson3: '3차시 AI 보조교사 실행하기'
+    };
+
+    return labels[lessonKey] || 'AI 보조교사 실행하기';
+  };
+
+  const launchLessonTutor = (lessonKey) => {
+    const targetUrl = GPT_LINKS[lessonKey];
+    if (!targetUrl || typeof window === 'undefined') return;
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const renderPredictHelperBanner = (lessonKey) => (
+    <section className="card ai-helper-banner">
+      <div className="ai-helper-head">
+        <span className="section-tag">AI 보조교사</span>
+        <button type="button" className="primary-button" onClick={() => launchLessonTutor(lessonKey)}>
+          {getLessonTutorLabel(lessonKey)}
+        </button>
+      </div>
+      <p className="body-text ai-helper-note">
+        AI 보조교사를 활용하여 자신의 생각을 적어봅시다. 실행한 AI 보조교사는 예상하기 활동 완료 후에도 끄지 말고 유지해주세요.
+      </p>
+    </section>
+  );
+
+  const renderExplainHelperBanner = () => (
+    <section className="card ai-helper-banner">
+      <span className="section-tag">AI 활용 안내</span>
+      <p className="body-text ai-helper-note">실행한 AI 보조교사를 활용하여 아래 제시된 질문에 대한 답을 적어봅시다.</p>
+    </section>
+  );
+
   const renderLesson3IcebreakResources = () => (
     <div className="lesson-detail-stack lesson-detail-stack--compact">
       <section className="card info-card">
@@ -1971,18 +2009,6 @@ function App() {
   };
 
   const renderAITutor = (lessonKey) => {
-    const labels = {
-      lesson1: '1차시 AI 보조교사 실행하기',
-      lesson2: '2차시 AI 보조교사 실행하기',
-      lesson3: '3차시 AI 보조교사 실행하기'
-    };
-
-    const launchTutor = () => {
-      const targetUrl = GPT_LINKS[lessonKey];
-      if (!targetUrl || typeof window === 'undefined') return;
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
-    };
-
     return (
       <div className="lesson-detail-stack ai-guide-layout">
         <section className="card detail-card ai-guide-card">
@@ -2004,11 +2030,11 @@ function App() {
           <div className="section-heading section-heading--stacked compact-gap">
             <div>
               <span className="section-tag">GPT 실행</span>
-              <h3>{labels[lessonKey]}</h3>
+              <h3>{getLessonTutorLabel(lessonKey)}</h3>
             </div>
           </div>
-          <button type="button" className="ai-launch-button" onClick={launchTutor}>
-            {labels[lessonKey]}
+          <button type="button" className="ai-launch-button" onClick={() => launchLessonTutor(lessonKey)}>
+            {getLessonTutorLabel(lessonKey)}
           </button>
           <p className="support-text ai-note">새 창에서 GPT가 열립니다. 활동 후 다시 코스웨어로 돌아와 답안을 정리하세요.</p>
         </section>
@@ -2206,11 +2232,11 @@ function App() {
         </div>
       );
     } else if (activeSubTab === 'predict') {
-      content = renderResponseSection(lessonKey, 'predict');
+      content = renderResponseSection(lessonKey, 'predict', null, renderPredictHelperBanner(lessonKey));
     } else if (activeSubTab === 'observe') {
       content = renderResponseSection(lessonKey, 'observe');
     } else if (activeSubTab === 'explain') {
-      content = renderResponseSection(lessonKey, 'explain');
+      content = renderResponseSection(lessonKey, 'explain', null, renderExplainHelperBanner());
     } else if (activeSubTab === 'summary') {
       content = renderSummarySection(lessonKey);
     } else if (activeSubTab === 'ai') {
