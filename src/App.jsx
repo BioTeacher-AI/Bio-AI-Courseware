@@ -259,7 +259,7 @@ const detailedLessonData = {
       '침에 있는 소화 효소에 의해 영양소가 분해되는 것을 확인하고 소화계의 작용을 설명할 수 있다.',
       '세포 호흡의 관점에서 소화계의 역할을 이해하고 설명할 수 있다.'
     ],
-    videoTitle: '동기 유발 영상',
+    videoTitle: '수업 관련 영상',
     videoDescription: '다음 두 영상을 순서대로 시청해 봅시다.',
     videos: [
       { title: '영상 1', embedUrl: 'https://www.youtube.com/embed/6_dwzfdbgNk' },
@@ -2259,7 +2259,7 @@ function App() {
     <div className="lesson-layout">
       <aside className="card lesson-sidebar">
         <span className="section-tag">차시 서브탭</span>
-        <h2>{activeLesson.title}</h2>
+        <h2 className="lesson-title">{activeLesson.title}</h2>
         <p>{activeLesson.summary}</p>
         <div className="subtab-list">
           {lessonTabs.map((tab, index) => {
