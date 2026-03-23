@@ -112,23 +112,65 @@ const postSurveyForms = [
 
 const EMPTY_DATASET_PAYLOAD = { dataset: '', sheetName: '', count: 0, data: [] };
 
-const INCREASE_IS_BETTER_QUESTIONS = [
+const SCIENTIFIC_CONCEPT_QUESTIONS = [
+  '소화 기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.',
   '심장은 우리 몸에 필요한 영양소, 산소를 온몸으로 운반한다.',
-  '소화기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.',
-  "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 '폐'이다.",
+  "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 폐이다.",
   '노폐물을 몸 밖으로 내보내는 과정을 배설이라고 한다.'
 ];
 
+const QUESTION_TO_LESSON_RAW = {
+  '소화는 음식으로부터 에너지를 방출하는 과정이다.': 'lesson1',
+  '소화 효소는 세포로 구성되어 있다.': 'lesson1',
+  '이자액에 의해 음식물이 소화되는 곳은 이자이다.': 'lesson1',
+  '소화 기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.': 'lesson1',
+  '소화기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.': 'lesson1',
+
+  '혈액은 단순히 빨간 액체이다.': 'lesson2',
+  '심장은 우리 몸에 필요한 영양소, 산소를 온몸으로 운반한다.': 'lesson2',
+  '심장은 몸의 왼쪽에 있다.': 'lesson2',
+  '모든 동맥에서는 산소를 많이 포함한 혈액만 흐른다.': 'lesson2',
+  '심장은 공기를 펌프질한다.': 'lesson2',
+  '심장은 필요한 혈액량을 판단하여 박동수를 조절한다.': 'lesson2',
+  '심장이 피를 정화한다.': 'lesson2',
+  '몸 전체에 공기 튜브가 있다.': 'lesson2',
+  "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 폐이다.": 'lesson2',
+  "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 '폐'이다.": 'lesson2',
+  '호흡은 폐에서만 일어난다.': 'lesson2',
+  '들이마신 공기의 성분은 대부분 산소이고, 내쉰 공기의 성분은 대부분 이산화탄소이다.': 'lesson2',
+  '들숨의 성분은 대부분 산소이고, 날숨의 성분은 대부분 이산화탄소이다.': 'lesson2',
+  '공기는 폐에서 바로 심장으로 들어간다.': 'lesson2',
+
+  '노폐물을 몸 밖으로 내보내는 과정을 배설이라고 한다.': 'lesson3',
+  '배설은 대변을 배출하는 것이다.': 'lesson3',
+  '오줌을 형성하는 곳은 방광이다.': 'lesson3',
+  '방광은 오줌을 걸러내는 기관이다.': 'lesson3'
+};
+
 function normalizeQuestionName(value) {
-  return String(value || '')
+  return String(value ?? '')
+    .trim()
+    .replace(/["'“”‘’]/g, '')
+    .replace(/[\.。,，]/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/[‘’“”"']/g, "'")
-    .trim();
+    .toLowerCase();
+}
+
+const QUESTION_TO_LESSON = Object.fromEntries(
+  Object.entries(QUESTION_TO_LESSON_RAW).map(([question, lessonKey]) => [normalizeQuestionName(question), lessonKey])
+);
+
+function isScientificConceptQuestion(questionName) {
+  const normalized = normalizeQuestionName(questionName);
+  return SCIENTIFIC_CONCEPT_QUESTIONS.some((question) => normalizeQuestionName(question) === normalized);
 }
 
 function isIncreaseBetterQuestion(questionName) {
-  const normalized = normalizeQuestionName(questionName);
-  return INCREASE_IS_BETTER_QUESTIONS.some((question) => normalizeQuestionName(question) === normalized);
+  return isScientificConceptQuestion(questionName);
+}
+
+function getLessonKeyFromQuestion(questionName) {
+  return QUESTION_TO_LESSON[normalizeQuestionName(questionName)] || null;
 }
 
 function parseScore(value) {
@@ -228,6 +270,63 @@ function getDirectionScore(questionName, preScore, postScore) {
   if (preScore === null || postScore === null) return 0;
   const delta = Number((postScore - preScore).toFixed(2));
   return isIncreaseBetterQuestion(questionName) ? delta : -delta;
+}
+
+function buildCategorySummary(items = [], category) {
+  const filteredItems = items.filter((item) => item.category === category);
+  const preScores = filteredItems.map((item) => item.preScore).filter((score) => score !== null);
+  const postScores = filteredItems.map((item) => item.postScore).filter((score) => score !== null);
+  const preAvg = average(preScores);
+  const postAvg = average(postScores);
+
+  return {
+    key: category,
+    label: category,
+    questionCount: filteredItems.length,
+    preAvg,
+    postAvg,
+    deltaAvg: Number((postAvg - preAvg).toFixed(2)),
+    improved: filteredItems.filter((item) => item.judgement === '개선').length,
+    same: filteredItems.filter((item) => item.judgement === '동일').length,
+    deepened: filteredItems.filter((item) => item.judgement === '심화').length,
+    items: filteredItems
+  };
+}
+
+function buildWeaknessByLesson(items = []) {
+  const result = {
+    lesson1: [],
+    lesson2: [],
+    lesson3: []
+  };
+
+  items.forEach((item) => {
+    if (item.preScore === null || item.postScore === null) return;
+
+    const isScientific = isScientificConceptQuestion(item.question);
+    const isWeak = isScientific ? item.postScore < item.preScore || item.postScore <= 2 : item.postScore > item.preScore;
+
+    if (!isWeak) return;
+
+    const lessonKey = item.lessonKey || getLessonKeyFromQuestion(item.question);
+    if (!lessonKey || !result[lessonKey]) return;
+
+    result[lessonKey].push({
+      question: item.question,
+      pre: item.preScore,
+      post: item.postScore,
+      type: isScientific ? '과학적 개념' : '오개념'
+    });
+  });
+
+  return result;
+}
+
+function getRecommendedLessons(weaknessByLesson) {
+  return Object.entries(weaknessByLesson)
+    .map(([lessonKey, items]) => ({ lessonKey, count: items.length }))
+    .filter((item) => item.count > 0)
+    .sort((a, b) => b.count - a.count || a.lessonKey.localeCompare(b.lessonKey));
 }
 
 function drawArrow(ctx, fromX, fromY, toX, toY) {
@@ -773,6 +872,9 @@ function App() {
   const [compareResult, setCompareResult] = useState(null);
   const [compareError, setCompareError] = useState('');
   const [compareLoading, setCompareLoading] = useState(false);
+  const [aiRecommendation, setAiRecommendation] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
   const [sortMode, setSortMode] = useState('original');
   const [teacherFilter, setTeacherFilter] = useState({ lesson: 'lesson1', section: 'icebreak' });
   const [teacherResponses, setTeacherResponses] = useState([]);
@@ -1193,6 +1295,8 @@ function App() {
 
     setCompareLoading(true);
     setCompareError('');
+    setAiRecommendation('');
+    setAiError('');
 
     try {
       let localPrePayload = prePayload;
@@ -1264,6 +1368,8 @@ function App() {
 
           const delta = pre === null || post === null ? null : Number((post - pre).toFixed(2));
           const judgement = classifyChange(column, pre, post);
+          const category = isScientificConceptQuestion(preColumn) ? '과학적 개념' : '오개념';
+          const lessonKey = getLessonKeyFromQuestion(preColumn);
 
           return {
             index,
@@ -1272,7 +1378,9 @@ function App() {
             postScore: post,
             delta,
             judgement,
-            directionScore: getDirectionScore(column, pre, post)
+            directionScore: getDirectionScore(column, pre, post),
+            category,
+            lessonKey
           };
         })
         .filter(Boolean);
@@ -1289,6 +1397,12 @@ function App() {
       const improved = items.filter((item) => item.judgement === '개선').length;
       const same = items.filter((item) => item.judgement === '동일').length;
       const deepened = items.filter((item) => item.judgement === '심화').length;
+      const categorySummary = {
+        scientific: buildCategorySummary(items, '과학적 개념'),
+        misconception: buildCategorySummary(items, '오개념')
+      };
+      const weaknessByLesson = buildWeaknessByLesson(items);
+      const recommendedLessons = getRecommendedLessons(weaknessByLesson);
 
       setCompareResult({
         student: {
@@ -1306,11 +1420,18 @@ function App() {
           same,
           deepened
         },
+        categorySummary,
+        weaknessByLesson,
+        recommendedLessons,
         items
       });
+      setAiRecommendation('');
+      setAiError('');
       setSortMode('original');
     } catch (error) {
       setCompareResult(null);
+      setAiRecommendation('');
+      setAiError('');
       setCompareError(error.message || '비교 결과를 불러오지 못했습니다.');
     } finally {
       setCompareLoading(false);
@@ -1331,6 +1452,59 @@ function App() {
 
     return base.sort((a, b) => a.index - b.index);
   }, [compareResult, sortMode]);
+
+  const lessonDisplayNameMap = {
+    lesson1: '1차시',
+    lesson2: '2차시',
+    lesson3: '3차시'
+  };
+
+  const requestAiRecommendation = async () => {
+    if (!compareResult) {
+      setAiError('먼저 학생의 사전/사후 결과를 조회해 주세요.');
+      setAiRecommendation('');
+      return;
+    }
+
+    if (!compareResult.recommendedLessons.length) {
+      setAiError('');
+      setAiRecommendation('현재 추가 학습 추천이 필요하지 않습니다.');
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError('');
+
+    try {
+      const response = await fetch('/.netlify/functions/analyze-learning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentName: compareResult.student.name,
+          summary: {
+            overall: compareResult.summary,
+            scientific: compareResult.categorySummary.scientific,
+            misconception: compareResult.categorySummary.misconception
+          },
+          weaknessByLesson: compareResult.weaknessByLesson,
+          recommendedLessons: compareResult.recommendedLessons
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.recommendation) {
+        throw new Error(result?.error || 'AI 추천을 생성하지 못했습니다.');
+      }
+
+      setAiRecommendation(result.recommendation);
+    } catch (error) {
+      setAiRecommendation('');
+      setAiError(error.message || 'AI 추천을 불러오지 못했습니다.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const renderHome = () => (
     <div className="page-stack">
@@ -1494,23 +1668,75 @@ function App() {
   );
 
   const renderProgressDashboard = () => {
-    const metricCards = compareResult
+    const scientificSummary = compareResult?.categorySummary?.scientific;
+    const misconceptionSummary = compareResult?.categorySummary?.misconception;
+    const scientificItems = sortedCompareItems.filter((item) => item.category === '과학적 개념');
+    const misconceptionItems = sortedCompareItems.filter((item) => item.category === '오개념');
+    const summaryGroups = compareResult
       ? [
-          { label: '분석 문항 수', value: `${compareResult.summary.questionCount}개` },
-          { label: '사전 평균', value: compareResult.summary.preAvg.toFixed(2) },
-          { label: '사후 평균', value: compareResult.summary.postAvg.toFixed(2) },
-          { label: '평균 변화량', value: `${compareResult.summary.deltaAvg >= 0 ? '+' : ''}${compareResult.summary.deltaAvg.toFixed(2)}` },
-          { label: '개선 문항 수', value: `${compareResult.summary.improved}개` },
-          { label: '동일 문항 수', value: `${compareResult.summary.same}개` },
-          { label: '심화 문항 수', value: `${compareResult.summary.deepened}개` }
+          {
+            key: 'scientific',
+            title: '과학적 개념 문항 요약',
+            tag: '과학적 개념',
+            summary: scientificSummary
+          },
+          {
+            key: 'misconception',
+            title: '오개념 문항 요약',
+            tag: '오개념',
+            summary: misconceptionSummary
+          }
         ]
       : [];
 
-    const distributionBars = compareResult
+    const averageCharts = compareResult
       ? [
-          { label: '개선', value: compareResult.summary.improved, className: 'tone-up' },
-          { label: '동일', value: compareResult.summary.same, className: 'tone-neutral' },
-          { label: '심화', value: compareResult.summary.deepened, className: 'tone-down' }
+          {
+            key: 'scientific-average',
+            tag: '그래프 1',
+            title: '과학적 개념 문항 평균 비교',
+            summary: scientificSummary
+          },
+          {
+            key: 'misconception-average',
+            tag: '그래프 2',
+            title: '오개념 문항 평균 비교',
+            summary: misconceptionSummary
+          }
+        ]
+      : [];
+
+    const distributionCharts = compareResult
+      ? [
+          {
+            key: 'scientific-distribution',
+            tag: '그래프 3',
+            title: '과학적 개념 문항 개선/동일/심화 분포',
+            summary: scientificSummary
+          },
+          {
+            key: 'misconception-distribution',
+            tag: '그래프 4',
+            title: '오개념 문항 개선/동일/심화 분포',
+            summary: misconceptionSummary
+          }
+        ]
+      : [];
+
+    const comparisonSections = compareResult
+      ? [
+          {
+            key: 'scientific-table',
+            title: '과학적 개념 문항 비교',
+            tag: '과학적 개념 문항 비교',
+            items: scientificItems
+          },
+          {
+            key: 'misconception-table',
+            title: '오개념 문항 비교',
+            tag: '오개념 문항 비교',
+            items: misconceptionItems
+          }
         ]
       : [];
 
@@ -1592,105 +1818,93 @@ function App() {
               </div>
             </section>
 
-            <section className="card detail-card">
-              <div className="section-heading section-heading--stacked compact-gap">
-                <div>
-                  <span className="section-tag">요약 카드</span>
-                  <h3>결과 요약</h3>
-                </div>
-                <p>사전/사후 평균, 변화량, 개선·동일·심화 문항 수를 한 번에 확인할 수 있습니다.</p>
-              </div>
-              <div className="metrics-grid">
-                {metricCards.map((metric) => (
-                  <article key={metric.label} className="metric-card">
-                    <span>{metric.label}</span>
-                    <strong>{metric.value}</strong>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="card detail-card">
-              <div className="section-heading section-heading--stacked compact-gap">
-                <div>
-                  <span className="section-tag">그래프 1</span>
-                  <h3>사전 평균 vs 사후 평균</h3>
-                </div>
-              </div>
-              <div className="simple-chart">
-                {[
-                  { label: '사전 평균', value: compareResult.summary.preAvg, className: 'tone-neutral' },
-                  { label: '사후 평균', value: compareResult.summary.postAvg, className: 'tone-up' }
-                ].map((bar) => (
-                  <div key={bar.label} className="chart-row">
-                    <span>{bar.label}</span>
-                    <div className="chart-track">
-                      <div className={`chart-bar ${bar.className}`} style={{ width: `${(bar.value / 5) * 100}%` }} />
+            <div className="content-grid">
+              {summaryGroups.map((group) => (
+                <section key={group.key} className="card detail-card">
+                  <div className="section-heading section-heading--stacked compact-gap">
+                    <div>
+                      <span className="section-tag">{group.tag}</span>
+                      <h3>{group.title}</h3>
                     </div>
-                    <strong>{bar.value.toFixed(2)}</strong>
+                    <p>{group.tag} 문항의 평균과 판정 분포를 확인합니다.</p>
                   </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="card detail-card">
-              <div className="section-heading section-heading--stacked compact-gap">
-                <div>
-                  <span className="section-tag">그래프 2</span>
-                  <h3>문항별 사전/사후 비교</h3>
-                </div>
-                <p>각 문항의 사전 점수와 사후 점수를 나란히 비교합니다.</p>
-              </div>
-              <div className="compare-scroll">
-                {sortedCompareItems.map((item) => (
-                  <article key={item.question} className="pair-bars">
-                    <div className="pair-bars__head">
-                      <h4>{item.question}</h4>
-                      <span className={`tone-pill ${getJudgementTone(item.judgement)}`}>{item.judgement}</span>
-                    </div>
-                    <div className="simple-chart simple-chart--compact">
-                      <div className="chart-row">
-                        <span>사전</span>
-                        <div className="chart-track">
-                          <div className="chart-bar tone-neutral" style={{ width: `${((item.preScore || 0) / 5) * 100}%` }} />
-                        </div>
-                        <strong>{item.preScore ?? '-'}</strong>
-                      </div>
-                      <div className="chart-row">
-                        <span>사후</span>
-                        <div className="chart-track">
-                          <div className={`chart-bar ${getJudgementTone(item.judgement)}`} style={{ width: `${((item.postScore || 0) / 5) * 100}%` }} />
-                        </div>
-                        <strong>{item.postScore ?? '-'}</strong>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="card detail-card">
-              <div className="section-heading section-heading--stacked compact-gap">
-                <div>
-                  <span className="section-tag">그래프 3</span>
-                  <h3>개선/동일/심화 분포</h3>
-                </div>
-              </div>
-              <div className="simple-chart">
-                {distributionBars.map((bar) => (
-                  <div key={bar.label} className="chart-row">
-                    <span>{bar.label}</span>
-                    <div className="chart-track">
-                      <div
-                        className={`chart-bar ${bar.className}`}
-                        style={{ width: `${compareResult.summary.questionCount ? (bar.value / compareResult.summary.questionCount) * 100 : 0}%` }}
-                      />
-                    </div>
-                    <strong>{bar.value}</strong>
+                  <div className="metrics-grid metrics-grid--category-summary">
+                    {[
+                      { label: '문항 수', value: `${group.summary.questionCount}개` },
+                      { label: '사전 평균', value: group.summary.preAvg.toFixed(2) },
+                      { label: '사후 평균', value: group.summary.postAvg.toFixed(2) },
+                      { label: '평균 변화량', value: `${group.summary.deltaAvg >= 0 ? '+' : ''}${group.summary.deltaAvg.toFixed(2)}` },
+                      { label: '개선 수', value: `${group.summary.improved}개` },
+                      { label: '동일 수', value: `${group.summary.same}개` },
+                      { label: '심화 수', value: `${group.summary.deepened}개` }
+                    ].map((metric) => (
+                      <article key={metric.label} className="metric-card">
+                        <span>{metric.label}</span>
+                        <strong>{metric.value}</strong>
+                      </article>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
+              ))}
+            </div>
+
+            <div className="content-grid">
+              {averageCharts.map((chart) => (
+                <section key={chart.key} className="card detail-card">
+                  <div className="section-heading section-heading--stacked compact-gap">
+                    <div>
+                      <span className="section-tag">{chart.tag}</span>
+                      <h3>{chart.title}</h3>
+                    </div>
+                  </div>
+                  <div className="simple-chart">
+                    {[
+                      { label: '사전 평균', value: chart.summary.preAvg, className: 'tone-neutral' },
+                      { label: '사후 평균', value: chart.summary.postAvg, className: 'tone-up' }
+                    ].map((bar) => (
+                      <div key={bar.label} className="chart-row">
+                        <span>{bar.label}</span>
+                        <div className="chart-track">
+                          <div className={`chart-bar ${bar.className}`} style={{ width: `${(bar.value / 5) * 100}%` }} />
+                        </div>
+                        <strong>{bar.value.toFixed(2)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+
+            <div className="content-grid">
+              {distributionCharts.map((chart) => (
+                <section key={chart.key} className="card detail-card">
+                  <div className="section-heading section-heading--stacked compact-gap">
+                    <div>
+                      <span className="section-tag">{chart.tag}</span>
+                      <h3>{chart.title}</h3>
+                    </div>
+                  </div>
+                  <div className="simple-chart">
+                    {[
+                      { label: '개선', value: chart.summary.improved, className: 'tone-up' },
+                      { label: '동일', value: chart.summary.same, className: 'tone-neutral' },
+                      { label: '심화', value: chart.summary.deepened, className: 'tone-down' }
+                    ].map((bar) => (
+                      <div key={bar.label} className="chart-row">
+                        <span>{bar.label}</span>
+                        <div className="chart-track">
+                          <div
+                            className={`chart-bar ${bar.className}`}
+                            style={{ width: `${chart.summary.questionCount ? (bar.value / chart.summary.questionCount) * 100 : 0}%` }}
+                          />
+                        </div>
+                        <strong>{bar.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
 
             <section className="card detail-card">
               <div className="section-heading">
@@ -1707,31 +1921,93 @@ function App() {
                   </select>
                 </label>
               </div>
-              <div className="table-wrap">
-                <table className="compare-table">
-                  <thead>
-                    <tr>
-                      <th>문항명</th>
-                      <th>사전 점수</th>
-                      <th>사후 점수</th>
-                      <th>변화량(Δ)</th>
-                      <th>판정</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedCompareItems.map((item) => (
-                      <tr key={item.question}>
-                        <td>{item.question}</td>
-                        <td>{item.preScore ?? '-'}</td>
-                        <td>{item.postScore ?? '-'}</td>
-                        <td>{item.delta == null ? '-' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(2)}`}</td>
-                        <td>
-                          <span className={`tone-pill ${getJudgementTone(item.judgement)}`}>{item.judgement}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="lesson-detail-stack lesson-detail-stack--compact">
+                {comparisonSections.map((section) => (
+                  <section key={section.key} className="card nested-section-card">
+                    <div className="section-heading section-heading--stacked compact-gap">
+                      <div>
+                        <span className="section-tag">{section.tag}</span>
+                        <h4>{section.title}</h4>
+                      </div>
+                      <p>{section.items.length}개 문항의 사전/사후 비교 결과입니다.</p>
+                    </div>
+                    <div className="table-wrap">
+                      <table className="compare-table">
+                        <thead>
+                          <tr>
+                            <th>문항명</th>
+                            <th>사전 점수</th>
+                            <th>사후 점수</th>
+                            <th>변화량(Δ)</th>
+                            <th>판정</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {section.items.map((item) => (
+                            <tr key={`${section.key}-${item.question}`}>
+                              <td>{item.question}</td>
+                              <td>{item.preScore ?? '-'}</td>
+                              <td>{item.postScore ?? '-'}</td>
+                              <td>{item.delta == null ? '-' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(2)}`}</td>
+                              <td>
+                                <span className={`tone-pill ${getJudgementTone(item.judgement)}`}>{item.judgement}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </section>
+
+            <section className="card detail-card">
+              <div className="section-heading section-heading--stacked compact-gap">
+                <div>
+                  <span className="section-tag">AI 추천 학습</span>
+                  <h3>부족한 차시 기반 AI 추천</h3>
+                </div>
+                <p>사전/사후 결과를 바탕으로 복습이 필요한 차시와 다시 보면 좋은 활동 단계를 추천합니다.</p>
+              </div>
+              <div className="lesson-detail-stack lesson-detail-stack--compact">
+                {compareResult.recommendedLessons.length > 0 && (
+                  <section className="card nested-section-card">
+                    <div className="section-heading section-heading--stacked compact-gap">
+                      <div>
+                        <span className="section-tag">추천 우선순위</span>
+                        <h4>복습이 필요한 차시</h4>
+                      </div>
+                    </div>
+                    <div className="metrics-grid metrics-grid--student">
+                      {compareResult.recommendedLessons.map((item) => (
+                        <article key={item.lessonKey} className="metric-card">
+                          <span>{lessonDisplayNameMap[item.lessonKey] || item.lessonKey}</span>
+                          <strong>{item.count}개 부족 문항</strong>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                <div className="save-row">
+                  <button type="button" className="primary-button" onClick={requestAiRecommendation} disabled={aiLoading || !compareResult}>
+                    {aiLoading ? 'AI 추천 생성 중...' : 'AI 추천 받기'}
+                  </button>
+                  {aiError && <span className="status-message status-message--error">{aiError}</span>}
+                </div>
+
+                {(aiRecommendation || !compareResult.recommendedLessons.length) && (
+                  <section className="card nested-section-card">
+                    <div className="section-heading section-heading--stacked compact-gap">
+                      <div>
+                        <span className="section-tag">추천 결과</span>
+                        <h4>AI 추천 학습 안내</h4>
+                      </div>
+                    </div>
+                    <p className="body-text">{aiRecommendation || '현재 추가 학습 추천이 필요하지 않습니다.'}</p>
+                  </section>
+                )}
               </div>
             </section>
           </>
