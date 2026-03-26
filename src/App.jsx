@@ -283,6 +283,12 @@ function getCategoryStatusLabel(category, status) {
   return status;
 }
 
+function getSimpleStatusLabel(status) {
+  if (status === '개선') return '증가';
+  if (status === '심화') return '감소';
+  return '동일';
+}
+
 function getDirectionScore(questionName, preScore, postScore) {
   if (preScore === null || postScore === null) return 0;
   const delta = Number((postScore - preScore).toFixed(2));
@@ -2166,9 +2172,9 @@ function App() {
                   </div>
                   <div className="simple-chart">
                     {[
-                      { label: getCategoryStatusLabel(chart.summary.category, '개선'), value: chart.summary.improved, className: 'tone-up' },
-                      { label: getCategoryStatusLabel(chart.summary.category, '동일'), value: chart.summary.same, className: 'tone-neutral' },
-                      { label: getCategoryStatusLabel(chart.summary.category, '심화'), value: chart.summary.deepened, className: 'tone-down' }
+                      { label: getSimpleStatusLabel('개선'), value: chart.summary.improved, className: 'tone-up' },
+                      { label: getSimpleStatusLabel('동일'), value: chart.summary.same, className: 'tone-neutral' },
+                      { label: getSimpleStatusLabel('심화'), value: chart.summary.deepened, className: 'tone-down' }
                     ].map((bar) => (
                       <div key={bar.label} className="chart-row">
                         <span>{bar.label}</span>
