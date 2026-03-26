@@ -267,6 +267,22 @@ function getJudgementTone(change) {
   return 'tone-neutral';
 }
 
+function getCategoryStatusLabel(category, status) {
+  if (status === '동일') return '동일';
+
+  if (category === '과학적 개념') {
+    if (status === '개선') return '과학적 개념 확신도 강화';
+    if (status === '심화') return '과학적 개념 확신도 약화';
+  }
+
+  if (category === '오개념') {
+    if (status === '개선') return '오개념 확신도 약화';
+    if (status === '심화') return '오개념 확신도 강화';
+  }
+
+  return status;
+}
+
 function getDirectionScore(questionName, preScore, postScore) {
   if (preScore === null || postScore === null) return 0;
   const delta = Number((postScore - preScore).toFixed(2));
@@ -359,7 +375,7 @@ const detailedLessonData = {
       '침에 있는 소화 효소에 의해 영양소가 분해되는 것을 확인하고 소화계의 작용을 설명할 수 있다.',
       '세포 호흡의 관점에서 소화계의 역할을 이해하고 설명할 수 있다.'
     ],
-    videoTitle: '수업 관련 영상',
+    videoTitle: '수업 도입 영상',
     videoDescription: '다음 두 영상을 순서대로 시청해 봅시다.',
     videos: [
       { title: '영상 1', embedUrl: 'https://www.youtube.com/embed/6_dwzfdbgNk' },
@@ -1948,13 +1964,13 @@ function App() {
           {
             key: 'scientific-distribution',
             tag: '그래프 3',
-            title: '과학적 개념 문항 개선/동일/심화 분포',
+            title: '과학적 개념 문항 확신도 변화 분포',
             summary: scientificSummary
           },
           {
             key: 'misconception-distribution',
             tag: '그래프 4',
-            title: '오개념 문항 개선/동일/심화 분포',
+            title: '오개념 문항 확신도 변화 분포',
             summary: misconceptionSummary
           }
         ]
@@ -2071,9 +2087,9 @@ function App() {
                       { label: '사전 평균', value: group.summary.preAvg.toFixed(2) },
                       { label: '사후 평균', value: group.summary.postAvg.toFixed(2) },
                       { label: '평균 변화량', value: `${group.summary.deltaAvg >= 0 ? '+' : ''}${group.summary.deltaAvg.toFixed(2)}` },
-                      { label: '개선 수', value: `${group.summary.improved}개` },
-                      { label: '동일 수', value: `${group.summary.same}개` },
-                      { label: '심화 수', value: `${group.summary.deepened}개` }
+                      { label: `${getCategoryStatusLabel(group.tag, '개선')} 수`, value: `${group.summary.improved}개` },
+                      { label: `${getCategoryStatusLabel(group.tag, '동일')} 수`, value: `${group.summary.same}개` },
+                      { label: `${getCategoryStatusLabel(group.tag, '심화')} 수`, value: `${group.summary.deepened}개` }
                     ].map((metric) => (
                       <article key={metric.label} className="metric-card">
                         <span>{metric.label}</span>
@@ -2123,9 +2139,9 @@ function App() {
                   </div>
                   <div className="simple-chart">
                     {[
-                      { label: '개선', value: chart.summary.improved, className: 'tone-up' },
-                      { label: '동일', value: chart.summary.same, className: 'tone-neutral' },
-                      { label: '심화', value: chart.summary.deepened, className: 'tone-down' }
+                      { label: getCategoryStatusLabel(chart.summary.category, '개선'), value: chart.summary.improved, className: 'tone-up' },
+                      { label: getCategoryStatusLabel(chart.summary.category, '동일'), value: chart.summary.same, className: 'tone-neutral' },
+                      { label: getCategoryStatusLabel(chart.summary.category, '심화'), value: chart.summary.deepened, className: 'tone-down' }
                     ].map((bar) => (
                       <div key={bar.label} className="chart-row">
                         <span>{bar.label}</span>
@@ -2153,8 +2169,8 @@ function App() {
                   <span>정렬</span>
                   <select className="text-input" value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
                     <option value="original">원래 순서</option>
-                    <option value="improved">개선 큰 순</option>
-                    <option value="worsened">심화 큰 순</option>
+                    <option value="improved">긍정 변화 큰 순</option>
+                    <option value="worsened">주의 변화 큰 순</option>
                   </select>
                 </label>
               </div>
@@ -2187,7 +2203,7 @@ function App() {
                               <td>{item.postScore ?? '-'}</td>
                               <td>{item.delta == null ? '-' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(2)}`}</td>
                               <td>
-                                <span className={`tone-pill ${getJudgementTone(item.judgement)}`}>{item.judgement}</span>
+                                <span className={`tone-pill ${getJudgementTone(item.judgement)}`}>{getCategoryStatusLabel(item.category, item.judgement)}</span>
                               </td>
                             </tr>
                           ))}
