@@ -1338,7 +1338,16 @@ function App() {
         });
 
         if (!response.ok) {
-          throw new Error(`서버 응답 오류: ${response.status}`);
+          const errorText = await response.text();
+          let errorMessage = '';
+          try {
+            const parsed = JSON.parse(errorText);
+            errorMessage = parsed?.message || parsed?.error || '';
+          } catch (parseError) {
+            errorMessage = errorText || '';
+          }
+
+          throw new Error(errorMessage || `서버 응답 오류: ${response.status}`);
         }
       }
 

@@ -20,9 +20,19 @@ exports.handler = async function (event) {
     };
   }
 
+  let payload = {};
   try {
-    const payload = event.body ? JSON.parse(event.body) : {};
+    payload = event.body ? JSON.parse(event.body) : {};
+  } catch (error) {
+    console.error('save-answer invalid body:', error);
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok: false, message: '요청 본문(JSON) 형식이 올바르지 않습니다.' })
+    };
+  }
 
+  try {
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
