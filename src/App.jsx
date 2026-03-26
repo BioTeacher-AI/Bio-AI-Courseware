@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'bio-ai-courseware-state-v2';
-const ANSWER_SAVE_API_URL =
-  'https://script.google.com/macros/s/AKfycbyV7pvzM2hsqjk72p09v2E9yWLaIa9WfPiekI7Dpan-dQ3Y-bSaHcuk-pGUor96WsWwcQ/exec';
+// VITE_GOOGLE_SCRIPT_API_URL 환경변수에 Google Apps Script 웹앱 URL을 설정해야 합니다.
+const API_URL = import.meta.env.VITE_GOOGLE_SCRIPT_API_URL;
 
 const topTabs = [
   { id: 'home', label: '홈' },
@@ -865,7 +865,7 @@ const STUDENT_QUESTION_GROUPS = {
         questions: [
           { questionId: 'L1_Summary_Q1', sectionLabel: '정리하기', questionText: '세포 호흡의 관점에서 소화계가 하는 역할은?' },
           { questionId: 'L1_Summary_Q2', sectionLabel: '정리하기', questionText: '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 소화계는 어떤 도움을 주어야 할지 적어봅시다.' },
-          { questionId: 'L1_Reflection_Q1', sectionLabel: '생각변화', questionText: '오늘 수업을 통해 여러분의 생각이 변화된 것이 있다면 자유롭게 적어주세요.' }
+          { questionId: 'L1_Reflection_Q3', sectionLabel: '생각변화', questionText: '오늘 수업을 통해 여러분의 생각이 변화된 것이 있다면 자유롭게 적어주세요.' }
         ]
       }
     ]
@@ -1017,6 +1017,21 @@ const STUDENT_QUESTION_GROUPS = {
 function getSectionQuestionGroups(lessonKey, sectionKey, section) {
   return STUDENT_QUESTION_GROUPS?.[lessonKey]?.[sectionKey] || section?.groups || [];
 }
+
+const QUESTION_MAP = Object.values(STUDENT_QUESTION_GROUPS).reduce((acc, sectionMap) => {
+  Object.values(sectionMap).forEach((groups) => {
+    groups.forEach((group) => {
+      group.questions.forEach((question) => {
+        acc[question.questionId] = {
+          lesson: question.questionId.startsWith('L1_') ? 'lesson1' : question.questionId.startsWith('L2_') ? 'lesson2' : 'lesson3',
+          section: question.sectionLabel,
+          text: question.questionText
+        };
+      });
+    });
+  });
+  return acc;
+}, {});
 
 const lessonContent = {
   lesson1: { title: detailedLessonData.lesson1.title, summary: detailedLessonData.lesson1.summary },
@@ -1294,99 +1309,87 @@ function App() {
     }));
   };
 
-  const saveAnswer = async ({ studentId, name, lesson, section, questionId, questionText, answer }) => {
-    const response = await fetch(ANSWER_SAVE_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        studentId,
-        name,
-        lesson,
-        section,
-        questionId,
-        questionText,
-        answer
-      })
-    });
+  const saveAnswersBatch = async ({ studentId, name, answers }) => {
+    if (!API_URL) {
+      return { success: false, error: '저장 API 주소가 설정되지 않았습니다. (VITE_GOOGLE_SCRIPT_API_URL 확인)' };
+    }
 
-    let result = null;
+    if (!studentId || !name) {
+      return { success: false, error: '이름과 학번을 먼저 입력해주세요.' };
+    }
+
+    const entries = Object.entries(answers || {}).filter(([, answer]) => String(answer ?? '').trim());
+    if (!entries.length) {
+      return { success: false, error: '저장할 답안을 먼저 입력해주세요.' };
+    }
+
     try {
-      result = await response.json();
-    } catch (parseError) {
-      result = null;
-    }
+      for (const [questionId, answer] of entries) {
+        const question = QUESTION_MAP[questionId];
+        if (!question) continue;
 
-    if (!response.ok) {
-      throw new Error(result?.error || result?.message || '서버에서 저장 요청을 처리하지 못했습니다.');
-    }
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId,
+            name,
+            lesson: question.lesson,
+            section: question.section,
+            questionId,
+            questionText: question.text,
+            answer: String(answer).trim()
+          })
+        });
 
-    return result;
+        if (!response.ok) {
+          throw new Error(`서버 응답 오류: ${response.status}`);
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('답안 저장 오류:', error);
+      return {
+        success: false,
+        error:
+          error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError')
+            ? '네트워크 연결을 확인한 뒤 다시 시도해 주세요.'
+            : '저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      };
+    }
   };
 
-  const saveSingleAnswer = async ({ lessonKey, sectionKey, questionId, questionText, answer, sectionLabel }) => {
+  const handleSaveSectionAll = async ({ lessonKey, sectionKey, questionGroups }) => {
     const student = responseState[lessonKey];
-    const statusKey = `${lessonKey}-${sectionKey}-${questionId}`;
-    const name = String(student?.studentName ?? '').trim();
-    const studentId = String(student?.studentId ?? '').trim();
-    const cleanedAnswer = String(answer ?? '').trim();
+    const statusKey = `${lessonKey}-${sectionKey}`;
+    const sectionAnswers = responseState[lessonKey]?.sections?.[sectionKey] || {};
 
-    if (!name || !studentId) {
-      setSaveStatus((current) => ({
-        ...current,
-        [statusKey]: { type: 'error', message: '이름과 학번을 먼저 입력해 주세요.' }
-      }));
-      return;
-    }
-
-    if (!cleanedAnswer) {
-      setSaveStatus((current) => ({
-        ...current,
-        [statusKey]: { type: 'error', message: '답변을 입력한 뒤 저장해 주세요.' }
-      }));
-      return;
-    }
+    const answersByQuestionId = {};
+    questionGroups.forEach((group, groupIndex) => {
+      (group.questions || []).forEach((question, promptIndex) => {
+        const answerKey = `g${groupIndex + 1}_q${promptIndex + 1}`;
+        answersByQuestionId[question.questionId] = sectionAnswers[answerKey] || '';
+      });
+    });
 
     setSaveStatus((current) => ({
       ...current,
       [statusKey]: { type: 'loading', message: '저장 중...' }
     }));
 
-    try {
-      await saveAnswer({
-        studentId,
-        name,
-        lesson: lessonKey,
-        section: sectionLabel || sectionKey,
-        questionId,
-        questionText,
-        answer: cleanedAnswer
-      });
+    const result = await saveAnswersBatch({
+      studentId: String(student?.studentId ?? '').trim(),
+      name: String(student?.studentName ?? '').trim(),
+      answers: answersByQuestionId
+    });
 
-      setSaveStatus((current) => ({
-        ...current,
-        [statusKey]: {
-          type: 'success',
-          message: `저장 완료 (${new Date().toLocaleTimeString('ko-KR', { hour12: false })})`
-        }
-      }));
-    } catch (error) {
-      console.error('답안 저장 오류', {
-        lessonKey,
-        sectionKey,
-        questionId,
-        error
-      });
-
-      const friendlyMessage =
-        error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError')
-          ? '네트워크 연결을 확인한 뒤 다시 시도해 주세요.'
-          : error?.message || '저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-
-      setSaveStatus((current) => ({
-        ...current,
-        [statusKey]: { type: 'error', message: friendlyMessage }
-      }));
-    }
+    setSaveStatus((current) => ({
+      ...current,
+      [statusKey]: result.success
+        ? { type: 'success', message: `저장 완료 (${new Date().toLocaleTimeString('ko-KR', { hour12: false })})` }
+        : { type: 'error', message: result.error || '저장 중 오류가 발생했습니다.' }
+    }));
   };
 
   const fetchTeacherResponses = async () => {
@@ -2330,6 +2333,7 @@ function App() {
     const section = sectionOverride || lesson.responseSections[sectionKey];
     const questionGroups = getSectionQuestionGroups(lessonKey, sectionKey, section);
     const answers = responseState[lessonKey]?.sections?.[sectionKey] ?? {};
+    const status = saveStatus[`${lessonKey}-${sectionKey}`];
 
     if (!questionGroups?.length) {
       return null;
@@ -2362,7 +2366,6 @@ function App() {
                 <div className="question-form-grid">
                   {(group.questions || []).map((question, promptIndex) => {
                     const answerKey = `g${groupIndex + 1}_q${promptIndex + 1}`;
-                    const questionStatus = saveStatus[`${lessonKey}-${sectionKey}-${question.questionId}`];
 
                     return (
                       <article key={answerKey} className="question-card question-card--input">
@@ -2376,32 +2379,23 @@ function App() {
                           onChange={(event) => handleAnswerChange(lessonKey, sectionKey, answerKey, event.target.value)}
                           placeholder="여기에 답변을 입력하세요."
                         />
-                        <div className="save-row">
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={() =>
-                              saveSingleAnswer({
-                                lessonKey,
-                                sectionKey,
-                                questionId: question.questionId,
-                                questionText: question.questionText,
-                                answer: answers[answerKey] ?? '',
-                                sectionLabel: question.sectionLabel
-                              })
-                            }
-                            disabled={questionStatus?.type === 'loading'}
-                          >
-                            {questionStatus?.type === 'loading' ? '저장 중...' : '이 답변 저장'}
-                          </button>
-                          {questionStatus && <span className={`status-message status-message--${questionStatus.type}`}>{questionStatus.message}</span>}
-                        </div>
                       </article>
                     );
                   })}
                 </div>
               </section>
             ))}
+          </div>
+          <div className="save-row">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => handleSaveSectionAll({ lessonKey, sectionKey, questionGroups })}
+              disabled={status?.type === 'loading'}
+            >
+              {status?.type === 'loading' ? '저장 중...' : '전체 답안 저장'}
+            </button>
+            {status && <span className={`status-message status-message--${status.type}`}>{status.message}</span>}
           </div>
         </section>
       </div>

@@ -28,6 +28,7 @@
 
 다음 환경변수를 Netlify에 설정하세요.
 
+- `VITE_GOOGLE_SCRIPT_API_URL` (학생 답안 저장용 Google Apps Script Web App URL)
 - `RESPONSE_SAVE_URL`
 - `RESPONSE_READ_URL`
 - `GFORM_JSON_URL_PRE`
@@ -41,23 +42,21 @@
 - 학습 변화 확인 탭은 proxy를 통해 불러온 pre/post payload를 분리 저장한 뒤 공통 문항만 비교합니다.
 
 ## 저장 흐름
-1. 프론트엔드는 `/.netlify/functions/save-response`로 POST 요청을 보냅니다.
-2. Netlify Function은 `RESPONSE_SAVE_URL`로 전달된 Apps Script Web App에 JSON payload를 전달합니다.
-3. Apps Script는 Google Sheets 등에 응답을 저장합니다.
+1. 학생은 각 탭(생각열기/예상하기/관찰하기/설명하기/정리하기) 하단의 **전체 답안 저장** 버튼으로 해당 탭 답안을 한 번에 저장합니다.
+2. 프론트엔드는 `VITE_GOOGLE_SCRIPT_API_URL`로 직접 POST를 보내되, 실제 요청은 질문별로 나누어 전송합니다.
+3. 따라서 Google Sheets에는 질문당 1행씩 저장됩니다.
 
 예시 payload:
 
 ```json
 {
   "lesson": "lesson1",
-  "section": "predict",
-  "studentName": "홍길동",
+  "section": "예상하기",
   "studentId": "20230001",
-  "answers": {
-    "g1_q1": "...",
-    "g1_q2": "..."
-  },
-  "savedAt": "2026-03-19T00:00:00.000Z"
+  "name": "홍길동",
+  "questionId": "L1_Predict_Q1",
+  "questionText": "녹말-셀로판 튜브를 담근 비커의 아이오딘-아이오딘화 칼륨 용액과의 반응 결과는 어떠할까요? 그렇게 생각한 이유도 함께 적어봅시다.",
+  "answer": "..."
 }
 ```
 
