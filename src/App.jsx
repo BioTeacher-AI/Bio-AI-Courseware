@@ -271,13 +271,13 @@ function getCategoryStatusLabel(category, status) {
   if (status === '동일') return '동일';
 
   if (category === '과학적 개념') {
-    if (status === '개선') return '과학적 개념 확신도 강화';
-    if (status === '심화') return '과학적 개념 확신도 약화';
+    if (status === '개선') return '과학적 개념 확신도 증가';
+    if (status === '심화') return '과학적 개념 확신도 감소';
   }
 
   if (category === '오개념') {
-    if (status === '개선') return '오개념 확신도 약화';
-    if (status === '심화') return '오개념 확신도 강화';
+    if (status === '개선') return '오개념 확신도 감소';
+    if (status === '심화') return '오개념 확신도 증가';
   }
 
   return status;
@@ -1118,6 +1118,8 @@ function App() {
   const [aiRecommendation, setAiRecommendation] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [showRecommendationLinks, setShowRecommendationLinks] = useState(false);
+  const [aiRecommendationChecked, setAiRecommendationChecked] = useState(false);
   const [sortMode, setSortMode] = useState('original');
   const [teacherFilter, setTeacherFilter] = useState({ lesson: 'lesson1', section: 'icebreak' });
   const [teacherResponses, setTeacherResponses] = useState([]);
@@ -1691,11 +1693,15 @@ function App() {
       });
       setAiRecommendation('');
       setAiError('');
+      setShowRecommendationLinks(false);
+      setAiRecommendationChecked(false);
       setSortMode('original');
     } catch (error) {
       setCompareResult(null);
       setAiRecommendation('');
       setAiError('');
+      setShowRecommendationLinks(false);
+      setAiRecommendationChecked(false);
       setCompareError(error.message || '비교 결과를 불러오지 못했습니다.');
     } finally {
       setCompareLoading(false);
@@ -1727,17 +1733,23 @@ function App() {
     if (!compareResult) {
       setAiError('먼저 학생의 사전/사후 결과를 조회해 주세요.');
       setAiRecommendation('');
+      setShowRecommendationLinks(false);
+      setAiRecommendationChecked(false);
       return;
     }
 
     if (!compareResult.recommendedLessons.length) {
       setAiError('');
       setAiRecommendation('현재 추가 학습 추천이 필요하지 않습니다.');
+      setShowRecommendationLinks(false);
+      setAiRecommendationChecked(true);
       return;
     }
 
     setAiLoading(true);
     setAiError('');
+    setShowRecommendationLinks(false);
+    setAiRecommendationChecked(false);
 
     try {
       const response = await fetch('/.netlify/functions/analyze-learning', {
@@ -1762,9 +1774,13 @@ function App() {
       }
 
       setAiRecommendation(result.recommendation);
+      setShowRecommendationLinks(compareResult.recommendedLessons.length > 0);
+      setAiRecommendationChecked(true);
     } catch (error) {
       setAiRecommendation('');
       setAiError(error.message || 'AI 추천을 불러오지 못했습니다.');
+      setShowRecommendationLinks(false);
+      setAiRecommendationChecked(false);
     } finally {
       setAiLoading(false);
     }
@@ -1975,13 +1991,13 @@ function App() {
           {
             key: 'scientific-distribution',
             tag: '그래프 3',
-            title: '과학적 개념 문항 확신도 변화 분포',
+            title: '과학적 개념 확신도 증가/동일/감소 분포',
             summary: scientificSummary
           },
           {
             key: 'misconception-distribution',
             tag: '그래프 4',
-            title: '오개념 문항 확신도 변화 분포',
+            title: '오개념 확신도 감소/동일/증가 분포',
             summary: misconceptionSummary
           }
         ]
@@ -2261,7 +2277,7 @@ function App() {
                   {aiError && <span className="status-message status-message--error">{aiError}</span>}
                 </div>
 
-                {(aiRecommendation || !compareResult.recommendedLessons.length) && (
+                {aiRecommendationChecked && (aiRecommendation || !compareResult.recommendedLessons.length) && (
                   <section className="card nested-section-card">
                     <div className="section-heading section-heading--stacked compact-gap">
                       <div>
@@ -2273,38 +2289,40 @@ function App() {
                   </section>
                 )}
 
-                {compareResult.recommendedLessons.length > 0 ? (
-                  <section className="card nested-section-card">
-                    <div className="section-heading section-heading--stacked compact-gap">
-                      <div>
-                        <span className="section-tag">추천 학습 바로가기</span>
-                        <h4>추천 학습 바로가기</h4>
+                {aiRecommendationChecked && !aiError && (
+                  showRecommendationLinks && compareResult.recommendedLessons.length > 0 ? (
+                    <section className="card nested-section-card">
+                      <div className="section-heading section-heading--stacked compact-gap">
+                        <div>
+                          <span className="section-tag">추천 학습 바로가기</span>
+                          <h4>추천 학습 바로가기</h4>
+                        </div>
+                        <p>현재 결과를 바탕으로 다시 보면 좋은 차시입니다.</p>
                       </div>
-                      <p>현재 결과를 바탕으로 다시 보면 좋은 차시입니다.</p>
-                    </div>
-                    <div className="recommended-link-row">
-                      {compareResult.recommendedLessons.map((item) => (
-                        <button
-                          key={`recommended-${item.lessonKey}`}
-                          type="button"
-                          className="primary-button"
-                          onClick={() => moveToLesson(item.lessonKey)}
-                        >
-                          {getLessonQuickLabel(item.lessonKey)} (부족 문항 {item.count}개)
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                ) : (
-                  <section className="card nested-section-card">
-                    <div className="section-heading section-heading--stacked compact-gap">
-                      <div>
-                        <span className="section-tag">추천 학습 바로가기</span>
-                        <h4>추천 학습 바로가기</h4>
+                      <div className="recommended-link-row">
+                        {compareResult.recommendedLessons.map((item) => (
+                          <button
+                            key={`recommended-${item.lessonKey}`}
+                            type="button"
+                            className="primary-button"
+                            onClick={() => moveToLesson(item.lessonKey)}
+                          >
+                            {getLessonQuickLabel(item.lessonKey)} (부족 문항 {item.count}개)
+                          </button>
+                        ))}
                       </div>
-                    </div>
-                    <p className="body-text">현재 추가 학습 추천이 필요하지 않습니다.</p>
-                  </section>
+                    </section>
+                  ) : (
+                    <section className="card nested-section-card">
+                      <div className="section-heading section-heading--stacked compact-gap">
+                        <div>
+                          <span className="section-tag">추천 학습 바로가기</span>
+                          <h4>추천 학습 바로가기</h4>
+                        </div>
+                      </div>
+                      <p className="body-text">현재 추가 학습 추천이 필요하지 않습니다.</p>
+                    </section>
+                  )
                 )}
               </div>
             </section>
