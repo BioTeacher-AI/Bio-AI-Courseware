@@ -1297,6 +1297,17 @@ function App() {
     handleSubTabChange(lessonKey, nextTab.id);
   };
 
+  const moveToLesson = (lessonKey) => {
+    if (!['lesson1', 'lesson2', 'lesson3'].includes(lessonKey)) return;
+    setActiveTopTab(lessonKey);
+  };
+
+  const getLessonQuickLabel = (lessonKey) => {
+    if (lessonKey === 'lesson1') return '1차시 다시 보기';
+    if (lessonKey === 'lesson2') return '2차시 다시 보기';
+    if (lessonKey === 'lesson3') return '3차시 다시 보기';
+    return '추천 차시 다시 보기';
+  };
 
   const handleStudentFieldChange = (lessonKey, field, value) => {
     setResponseState((current) => ({
@@ -2259,6 +2270,40 @@ function App() {
                       </div>
                     </div>
                     <p className="body-text">{aiRecommendation || '현재 추가 학습 추천이 필요하지 않습니다.'}</p>
+                  </section>
+                )}
+
+                {compareResult.recommendedLessons.length > 0 ? (
+                  <section className="card nested-section-card">
+                    <div className="section-heading section-heading--stacked compact-gap">
+                      <div>
+                        <span className="section-tag">추천 학습 바로가기</span>
+                        <h4>추천 학습 바로가기</h4>
+                      </div>
+                      <p>현재 결과를 바탕으로 다시 보면 좋은 차시입니다.</p>
+                    </div>
+                    <div className="recommended-link-row">
+                      {compareResult.recommendedLessons.map((item) => (
+                        <button
+                          key={`recommended-${item.lessonKey}`}
+                          type="button"
+                          className="primary-button"
+                          onClick={() => moveToLesson(item.lessonKey)}
+                        >
+                          {getLessonQuickLabel(item.lessonKey)} (부족 문항 {item.count}개)
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ) : (
+                  <section className="card nested-section-card">
+                    <div className="section-heading section-heading--stacked compact-gap">
+                      <div>
+                        <span className="section-tag">추천 학습 바로가기</span>
+                        <h4>추천 학습 바로가기</h4>
+                      </div>
+                    </div>
+                    <p className="body-text">현재 추가 학습 추천이 필요하지 않습니다.</p>
                   </section>
                 )}
               </div>
