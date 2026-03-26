@@ -28,11 +28,15 @@
 
 다음 환경변수를 Netlify에 설정하세요.
 
-- `VITE_GOOGLE_SCRIPT_API_URL` (학생 답안 저장용 Google Apps Script Web App URL)
+- `GOOGLE_SCRIPT_SAVE_URL` (학생 답안 저장용 Google Apps Script Web App URL)
 - `RESPONSE_SAVE_URL`
 - `RESPONSE_READ_URL`
 - `GFORM_JSON_URL_PRE`
 - `GFORM_JSON_URL_POST` (기본 사후 URL: `https://script.google.com/macros/s/AKfycbwGWHDZ3l1pufPPCDixCmighF6tmMlC31-Oa_hHlp9sFwMEEFr9fakdhh8KoL986_4/exec`)
+
+예시:
+
+`GOOGLE_SCRIPT_SAVE_URL=https://script.google.com/macros/s/AKfycbyV7pvzM2hsqjk72p09v2E9yWLaIa9WfPiekI7Dpan-dQ3Y-bSaHcuk-pGUor96WsWwcQ/exec`
 
 ## Netlify Function proxy 구조
 - 학습 변화 확인 탭은 브라우저에서 Apps Script URL을 직접 호출하지 않습니다.
@@ -43,7 +47,7 @@
 
 ## 저장 흐름
 1. 학생은 각 탭(생각열기/예상하기/관찰하기/설명하기/정리하기) 하단의 **전체 답안 저장** 버튼으로 해당 탭 답안을 한 번에 저장합니다.
-2. 프론트엔드는 `VITE_GOOGLE_SCRIPT_API_URL`로 직접 POST를 보내되, 실제 요청은 질문별로 나누어 전송합니다.
+2. 프론트엔드는 `/.netlify/functions/save-answer`로 POST를 보내고, Netlify Function이 `GOOGLE_SCRIPT_SAVE_URL`로 다시 POST를 보냅니다.
 3. 따라서 Google Sheets에는 질문당 1행씩 저장됩니다.
 
 예시 payload:

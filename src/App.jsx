@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'bio-ai-courseware-state-v2';
-// VITE_GOOGLE_SCRIPT_API_URL 환경변수에 Google Apps Script 웹앱 URL을 설정해야 합니다.
-const API_URL = import.meta.env.VITE_GOOGLE_SCRIPT_API_URL;
+const API_URL = '/.netlify/functions/save-answer';
 
 const topTabs = [
   { id: 'home', label: '홈' },
@@ -1310,10 +1309,6 @@ function App() {
   };
 
   const saveAnswersBatch = async ({ studentId, name, answers }) => {
-    if (!API_URL) {
-      return { success: false, error: '저장 API 주소가 설정되지 않았습니다. (VITE_GOOGLE_SCRIPT_API_URL 확인)' };
-    }
-
     if (!studentId || !name) {
       return { success: false, error: '이름과 학번을 먼저 입력해주세요.' };
     }
