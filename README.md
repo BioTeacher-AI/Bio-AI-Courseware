@@ -50,6 +50,16 @@
 2. 프론트엔드는 `/.netlify/functions/save-answer`로 POST를 보내고, Netlify Function이 `GOOGLE_SCRIPT_SAVE_URL`로 다시 POST를 보냅니다.
 3. 따라서 Google Sheets에는 질문당 1행씩 저장됩니다.
 
+4. `save-answer` 함수는 Apps Script로 `application/x-www-form-urlencoded` 형식(`payload=<JSON문자열>`)으로 전달합니다.
+
+### Apps Script doPost 파싱 권장
+Apps Script 저장 웹앱에서는 아래 순서로 payload를 파싱하세요.
+
+1. `e.parameter.payload`가 있으면 `JSON.parse(e.parameter.payload)`
+2. 없으면 `e.postData.contents`를 `JSON.parse`
+
+이렇게 하면 Netlify Function의 form-urlencoded 전달과 raw JSON 전달을 모두 안전하게 처리할 수 있습니다.
+
 예시 payload:
 
 ```json

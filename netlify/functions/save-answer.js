@@ -33,12 +33,16 @@ exports.handler = async function (event) {
   }
 
   try {
+    const formBody = new URLSearchParams({
+      payload: JSON.stringify(payload)
+    }).toString();
+
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
       },
-      body: JSON.stringify(payload)
+      body: formBody
     });
 
     const text = await response.text();
