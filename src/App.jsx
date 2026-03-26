@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'bio-ai-courseware-state-v2';
+const ANSWER_SAVE_API_URL =
+  'https://script.google.com/macros/s/AKfycbyV7pvzM2hsqjk72p09v2E9yWLaIa9WfPiekI7Dpan-dQ3Y-bSaHcuk-pGUor96WsWwcQ/exec';
 
 const topTabs = [
   { id: 'home', label: '홈' },
@@ -807,6 +809,215 @@ const detailedLessonData = {
   }
 };
 
+const STUDENT_QUESTION_GROUPS = {
+  lesson1: {
+    icebreak: [
+      {
+        title: '생각열기 질문',
+        badgePrefix: '질문',
+        questions: [
+          { questionId: 'L1_Open_Q1', sectionLabel: '생각열기', questionText: '마라톤 선수가 먹은 바나나가 어떻게 근육을 움직이는 에너지가 될까요?' },
+          { questionId: 'L1_Open_Q2', sectionLabel: '생각열기', questionText: '소화되고 남은 물질은 어떻게 우리 몸을 빠져나올까요?' }
+        ]
+      }
+    ],
+    predict: [
+      {
+        title: '예상 질문',
+        badgePrefix: '예상 질문',
+        questions: [
+          { questionId: 'L1_Predict_Q1', sectionLabel: '예상하기', questionText: '녹말-셀로판 튜브를 담근 비커의 아이오딘-아이오딘화 칼륨 용액과의 반응 결과는 어떠할까요? 그렇게 생각한 이유도 함께 적어봅시다.' },
+          { questionId: 'L1_Predict_Q2', sectionLabel: '예상하기', questionText: '포도당-셀로판 튜브를 담근 비커의 베네딕트 반응 결과는 어떠할까요? 그렇게 생각한 이유도 함께 적어봅시다.' },
+          { questionId: 'L1_Predict_Q3', sectionLabel: '예상하기', questionText: '녹말 + 침 용액 셀로판 튜브를 담가둔 비커의 아이오딘-아이오딘화 칼륨 용액과 베네딕트 반응 결과는 각각 어떠할까요? 그렇게 생각한 이유도 함께 적어봅시다.' },
+          { questionId: 'L1_Predict_Q4', sectionLabel: '예상하기', questionText: '소화 과정은 에너지 생성 과정일까요? 여러분의 생각을 자유롭게 적어봅시다.' }
+        ]
+      }
+    ],
+    observe: [
+      {
+        title: '관찰 기록',
+        badgePrefix: '관찰',
+        questions: [
+          { questionId: 'L1_Observe_Q1', sectionLabel: '관찰하기', questionText: '녹말-셀로판 튜브를 담근 비커의 아이오딘-아이오딘화 칼륨 용액과의 반응 결과' },
+          { questionId: 'L1_Observe_Q2', sectionLabel: '관찰하기', questionText: '포도당-셀로판 튜브를 담근 비커의 베네딕트 반응 결과' },
+          { questionId: 'L1_Observe_Q3', sectionLabel: '관찰하기', questionText: '녹말 + 침 용액 셀로판 튜브를 담가둔 비커의 아이오딘-아이오딘화 칼륨 용액과 베네딕트 반응 결과' },
+          { questionId: 'L1_Observe_Q4', sectionLabel: '관찰하기', questionText: '소화 과정에서 에너지가 발생하였나요?' }
+        ]
+      }
+    ],
+    explain: [
+      {
+        title: '설명 질문',
+        badgePrefix: '설명 질문',
+        questions: [
+          { questionId: 'L1_Explain_Q1', sectionLabel: '설명하기', questionText: '각각의 튜브에서 나타난 색 변화가 어떤 물질의 이동 때문인지 설명해 봅시다.' },
+          { questionId: 'L1_Explain_Q2', sectionLabel: '설명하기', questionText: '이번 실험에서 관찰된 과정이 에너지를 생성하는 과정이라고 볼 수 있을까요?' },
+          { questionId: 'L1_Explain_Q3', sectionLabel: '설명하기', questionText: '실험 과정에서 녹말 용액과 침을 함께 넣은 용액에서 검출된 물질은 무엇인가요? 침의 어떤 성분에 의해 이러한 결과가 나타났을까요? 그리고 그 성분이 생물체의 ‘세포’ 혹은 ‘물질’인가요?' },
+          { questionId: 'L1_Explain_Q4', sectionLabel: '설명하기', questionText: '셀로판 튜브는 우리 몸의 기관 중 어느 것에 해당할지 적어보고, 셀로판 튜브를 통과한 영양소는 우리 몸에서 어느 곳으로 이동할지, 또, 셀로판 튜브 안에 남아서 통과하지 못한 물질은 우리 몸 안으로 들어왔다고 할 수 있는지 적어봅시다.' },
+          { questionId: 'L1_Explain_Q5', sectionLabel: '설명하기', questionText: '우리 몸에서 침과 같이 소화를 도와주는 물질이 분비되는 곳은 어느 기관이 있나요? 그리고 그 기관에서 직접적으로 소화 과정을 수행하는지 적어봅시다.' }
+        ]
+      }
+    ],
+    summary: [
+      {
+        title: '정리하기',
+        badgePrefix: '정리',
+        questions: [
+          { questionId: 'L1_Summary_Q1', sectionLabel: '정리하기', questionText: '세포 호흡의 관점에서 소화계가 하는 역할은?' },
+          { questionId: 'L1_Summary_Q2', sectionLabel: '정리하기', questionText: '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 소화계는 어떤 도움을 주어야 할지 적어봅시다.' },
+          { questionId: 'L1_Reflection_Q1', sectionLabel: '생각변화', questionText: '오늘 수업을 통해 여러분의 생각이 변화된 것이 있다면 자유롭게 적어주세요.' }
+        ]
+      }
+    ]
+  },
+  lesson2: {
+    icebreak: [
+      {
+        title: '생각열기 질문',
+        badgePrefix: '질문',
+        questions: [{ questionId: 'L2_Open_Q1', sectionLabel: '생각열기', questionText: '마라톤 선수들은 어떻게 지치지 않고 계속해서 달릴 수 있을까요?' }]
+      }
+    ],
+    predict: [
+      {
+        title: '순환계 예상하기',
+        badgePrefix: '순환계 질문',
+        questions: [
+          { questionId: 'L2_Circulation_Predict_Q1', sectionLabel: '순환계 예상하기', questionText: '심장 박동이 느껴지는 곳에 손을 대봅시다. 심장은 우리 몸의 어느 부분에 위치하고 있나요?' },
+          { questionId: 'L2_Circulation_Predict_Q2', sectionLabel: '순환계 예상하기', questionText: '1분간 격렬하게 운동을 한 직후, 자신의 심박수(BPM)는 안정 시 심박수와 비교하여 얼마나 달라질지 적어봅시다. 그리고 심박수 조절은 어느 기관에서 할지 적어봅시다.' },
+          { questionId: 'L2_Circulation_Predict_Q3', sectionLabel: '순환계 예상하기', questionText: '운동을 할 때, 심장 박동의 변화에 따라 혈관에서 흐르는 혈액의 양은 어떻게 변화할까요?' },
+          { questionId: 'L2_Circulation_Predict_Q4', sectionLabel: '순환계 예상하기', questionText: '심장에서 폐로 흐르는 혈관에는 산소가 (많은 / 적은) 혈액이 흐를 것이다. 여러분이 생각하는 답을 선택해 보세요.' }
+        ]
+      },
+      {
+        title: '호흡계 예상하기',
+        badgePrefix: '호흡계 질문',
+        questions: [
+          { questionId: 'L2_Respiration_Predict_Q1', sectionLabel: '호흡계 예상하기', questionText: '평상시와 운동 직후, 어느 때에 불어넣은 날숨이 BTB 용액을 더 빨리 노란색으로 변화시킬지, 그 이유와 함께 적어봅시다.' },
+          { questionId: 'L2_Respiration_Predict_Q2', sectionLabel: '호흡계 예상하기', questionText: '우리 몸에서 호흡은 어디에서 일어날까요?' },
+          { questionId: 'L2_Respiration_Predict_Q3', sectionLabel: '호흡계 예상하기', questionText: '들숨과 날숨에서 각각 산소와 이산화탄소의 비율은 각각 어떻게 될까요?' }
+        ]
+      }
+    ],
+    observe: [
+      {
+        title: '순환계 관찰하기',
+        badgePrefix: '순환계 관찰',
+        questions: [
+          { questionId: 'L2_Circulation_Observe_Q1', sectionLabel: '순환계 관찰하기', questionText: '안정 시 심박수 1회' },
+          { questionId: 'L2_Circulation_Observe_Q2', sectionLabel: '순환계 관찰하기', questionText: '안정 시 심박수 2회' },
+          { questionId: 'L2_Circulation_Observe_Q3', sectionLabel: '순환계 관찰하기', questionText: '안정 시 심박수 3회' },
+          { questionId: 'L2_Circulation_Observe_Q4', sectionLabel: '순환계 관찰하기', questionText: '운동 직후 심박수' },
+          { questionId: 'L2_Circulation_Observe_Q5', sectionLabel: '순환계 관찰하기', questionText: '회복 후 심박수' }
+        ]
+      },
+      {
+        title: '호흡계 관찰하기',
+        badgePrefix: '호흡계 관찰',
+        questions: [
+          { questionId: 'L2_Respiration_Observe_Q1', sectionLabel: '호흡계 관찰하기', questionText: '평상시 BTB 용액이 노란색으로 완전히 변할 때까지 걸린 시간' },
+          { questionId: 'L2_Respiration_Observe_Q2', sectionLabel: '호흡계 관찰하기', questionText: '운동 직후 BTB 용액이 노란색으로 완전히 변할 때까지 걸린 시간' }
+        ]
+      }
+    ],
+    explain: [
+      {
+        title: '순환계 설명하기',
+        badgePrefix: '순환계 설명',
+        questions: [
+          { questionId: 'L2_Circulation_Explain_Q1', sectionLabel: '순환계 설명하기', questionText: '심장 박동이 느껴지는 곳에 손을 대봅시다. 심장은 우리 몸의 어느 부분에 위치하고 있나요?' },
+          { questionId: 'L2_Circulation_Explain_Q2', sectionLabel: '순환계 설명하기', questionText: '운동을 하는 과정에서 심박수가 빨라졌을 때, 혈액이 흐르는 속도와 우리 몸 혈액의 전체 양은 각각 어떻게 될까요?' },
+          { questionId: 'L2_Circulation_Explain_Q3', sectionLabel: '순환계 설명하기', questionText: '심장에서 폐로 이산화탄소를 운반하는 혈관은 어디일까요? 그리고 그 혈관에 흐르는 산소의 양은 어떠할까요? 그 혈관의 명칭과 함께 생각해 봅시다.' },
+          { questionId: 'L2_Circulation_Explain_Q4', sectionLabel: '순환계 설명하기', questionText: '실험 결과를 토대로 안정 시 심박수와 운동 후 심박수, 회복 후 심박수의 변화를 세포 호흡의 관점에서 설명해 봅시다.' }
+        ]
+      },
+      {
+        title: '호흡계 설명하기',
+        badgePrefix: '호흡계 설명',
+        questions: [
+          { questionId: 'L2_Respiration_Explain_Q1', sectionLabel: '호흡계 설명하기', questionText: '실험 결과, 어느 비커에서 BTB 용액이 노란색으로 더 빠르게 변하였나요?' },
+          { questionId: 'L2_Respiration_Explain_Q2', sectionLabel: '호흡계 설명하기', questionText: '우리 몸에서 호흡은 어디에서 일어나는 활동인가요? 호흡이 일어나는 장소에 대해서 적어봅시다.' },
+          { questionId: 'L2_Respiration_Explain_Q3', sectionLabel: '호흡계 설명하기', questionText: '안정된 상태에서와 운동 후 들숨과 날숨에서 각각 산소와 이산화탄소의 비율은 각각 어떻게 될까요?' },
+          { questionId: 'L2_Respiration_Explain_Q4', sectionLabel: '호흡계 설명하기', questionText: '우리가 들이마신 공기는 어떤 경로를 통해서 우리 몸 내부로 이동하는 것인지 적어봅시다.' }
+        ]
+      }
+    ],
+    summary: [
+      {
+        title: '정리하기',
+        badgePrefix: '정리',
+        questions: [
+          { questionId: 'L2_Summary_Q1', sectionLabel: '정리하기', questionText: '세포 호흡의 관점에서 순환계가 하는 역할은?' },
+          { questionId: 'L2_Summary_Q2', sectionLabel: '정리하기', questionText: '세포 호흡의 관점에서 호흡계가 하는 역할은?' },
+          { questionId: 'L2_Summary_Q3', sectionLabel: '정리하기', questionText: '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 순환계와 호흡계는 각각 어떤 도움을 주어야 할지 적어봅시다.' },
+          { questionId: 'L2_Reflection_Q1', sectionLabel: '생각변화', questionText: '오늘 수업을 통해 여러분의 생각이 변화된 것이 있다면 자유롭게 적어주세요.' }
+        ]
+      }
+    ]
+  },
+  lesson3: {
+    icebreak: [
+      {
+        title: '생각열기 질문',
+        badgePrefix: '질문',
+        questions: [
+          { questionId: 'L3_Open_Q1', sectionLabel: '생각열기', questionText: '마라톤 선수의 오줌에서 요소 농도가 높아지는 현상을 세포 호흡 및 물질의 이동 경로와 관련지어 설명해 봅시다.' },
+          { questionId: 'L3_Open_Q2', sectionLabel: '생각열기', questionText: '세포 호흡의 결과물인 ‘요소’와 같은 노폐물이 혈액에 계속 쌓인다면, 우리 몸 전체에 어떤 문제가 생길까요?' },
+          { questionId: 'L3_Open_Q3', sectionLabel: '생각열기', questionText: '마라톤 선수가 바나나를 먹고 소화 과정을 통해 우리 몸으로 흡수된 영양소가 세포에서 사용되고 생성된 물질은 어떻게 우리 몸을 빠져나올까요?' }
+        ]
+      }
+    ],
+    predict: [
+      {
+        title: '예상 질문',
+        badgePrefix: '예상 질문',
+        questions: [
+          { questionId: 'L3_Predict_Q1', sectionLabel: '예상하기', questionText: '30분 뒤, 튜브 밖 비커의 물(증류수) 속으로 빠져나오는 물질은 무엇일까요? 그렇게 생각한 이유도 함께 적어봅시다.' },
+          { questionId: 'L3_Predict_Q2', sectionLabel: '예상하기', questionText: '실험에서 사용한 셀로판 튜브와 비커는 우리 몸의 어느 기관에 해당할까요? 자유롭게 적어봅시다.' }
+        ]
+      }
+    ],
+    observe: [
+      {
+        title: '관찰 기록',
+        badgePrefix: '관찰',
+        questions: [
+          { questionId: 'L3_Observe_Q1', sectionLabel: '관찰하기', questionText: '첫 번째 시험관에서 색 변화' },
+          { questionId: 'L3_Observe_Q2', sectionLabel: '관찰하기', questionText: '두 번째 시험관에서 색 변화' }
+        ]
+      }
+    ],
+    explain: [
+      {
+        title: '설명 질문',
+        badgePrefix: '설명 질문',
+        questions: [
+          { questionId: 'L3_Explain_Q1', sectionLabel: '설명하기', questionText: '실험에서 셀로판 튜브와 비커는 우리 몸의 배설계를 이루는 기관 중 각각 무엇에 해당하고 어떤 역할을 하는 것일까요?' },
+          { questionId: 'L3_Explain_Q2', sectionLabel: '설명하기', questionText: '셀로판 튜브에 남은 물질은 우리 몸에서 무엇을 의미할까요?' },
+          { questionId: 'L3_Explain_Q3', sectionLabel: '설명하기', questionText: '비커에 모인 액체는 우리 몸에서 생성되는 물질 중 무엇에 해당하는지 쓰고, 이 액체가 생성되는 과정을 우리 몸의 배설계를 이루는 기관을 포함하여 설명해 봅시다.' },
+          { questionId: 'L3_Explain_Q4', sectionLabel: '설명하기', questionText: '소화계에서 소화 과정을 마치고 나온 찌꺼기와 배설계에서 배설 경로를 거쳐 우리 몸에서 빠져나가는 노폐물은 같은 것인가요?' },
+          { questionId: 'L3_Explain_Q5', sectionLabel: '설명하기', questionText: '이 모형에서는 배설계에서 일어나는 과정 중 드러나지 않는 과정이 있습니다. 어떤 과정일까요?' }
+        ]
+      }
+    ],
+    summary: [
+      {
+        title: '정리하기',
+        badgePrefix: '정리',
+        questions: [
+          { questionId: 'L3_Summary_Q1', sectionLabel: '정리하기', questionText: '세포 호흡의 관점에서 배설계가 하는 역할은?' },
+          { questionId: 'L3_Summary_Q2', sectionLabel: '정리하기', questionText: '세포 호흡 공장이 멈추지 않고 계속 돌아가려면 배설계는 어떤 도움을 주어야 할지 적어봅시다.' },
+          { questionId: 'L3_Reflection_Q1', sectionLabel: '생각변화', questionText: '오늘 수업을 통해 여러분의 생각이 변화된 것이 있다면 자유롭게 적어주세요.' }
+        ]
+      }
+    ]
+  }
+};
+
+function getSectionQuestionGroups(lessonKey, sectionKey, section) {
+  return STUDENT_QUESTION_GROUPS?.[lessonKey]?.[sectionKey] || section?.groups || [];
+}
+
 const lessonContent = {
   lesson1: { title: detailedLessonData.lesson1.title, summary: detailedLessonData.lesson1.summary },
   lesson2: { title: detailedLessonData.lesson2.title, summary: detailedLessonData.lesson2.summary },
@@ -824,11 +1035,13 @@ const createEmptyResponses = () => {
     entries[lessonKey] = { studentName: '', studentId: '', sections: {} };
 
     Object.entries(lesson.responseSections || {}).forEach(([sectionKey, section]) => {
-      if (!section?.groups) return;
+      const groups = getSectionQuestionGroups(lessonKey, sectionKey, section);
+      if (!groups?.length) return;
 
       const answers = {};
-      section.groups.forEach((group, groupIndex) => {
-        group.prompts.forEach((_, promptIndex) => {
+      groups.forEach((group, groupIndex) => {
+        const questions = group.questions || group.prompts || [];
+        questions.forEach((_, promptIndex) => {
           answers[`g${groupIndex + 1}_q${promptIndex + 1}`] = '';
         });
       });
@@ -1081,80 +1294,97 @@ function App() {
     }));
   };
 
-  const saveSectionResponses = async (lessonKey, sectionKey) => {
-    const student = responseState[lessonKey];
-    const answers = student.sections[sectionKey];
-    const statusKey = `${lessonKey}-${sectionKey}`;
+  const saveAnswer = async ({ studentId, name, lesson, section, questionId, questionText, answer }) => {
+    const response = await fetch(ANSWER_SAVE_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentId,
+        name,
+        lesson,
+        section,
+        questionId,
+        questionText,
+        answer
+      })
+    });
 
-    if (!student.studentName.trim() || !student.studentId.trim()) {
+    let result = null;
+    try {
+      result = await response.json();
+    } catch (parseError) {
+      result = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(result?.error || result?.message || '서버에서 저장 요청을 처리하지 못했습니다.');
+    }
+
+    return result;
+  };
+
+  const saveSingleAnswer = async ({ lessonKey, sectionKey, questionId, questionText, answer, sectionLabel }) => {
+    const student = responseState[lessonKey];
+    const statusKey = `${lessonKey}-${sectionKey}-${questionId}`;
+    const name = String(student?.studentName ?? '').trim();
+    const studentId = String(student?.studentId ?? '').trim();
+    const cleanedAnswer = String(answer ?? '').trim();
+
+    if (!name || !studentId) {
       setSaveStatus((current) => ({
         ...current,
-        [statusKey]: { type: 'error', message: '저장 전에 이름과 학번을 입력해 주세요.' }
+        [statusKey]: { type: 'error', message: '이름과 학번을 먼저 입력해 주세요.' }
+      }));
+      return;
+    }
+
+    if (!cleanedAnswer) {
+      setSaveStatus((current) => ({
+        ...current,
+        [statusKey]: { type: 'error', message: '답변을 입력한 뒤 저장해 주세요.' }
       }));
       return;
     }
 
     setSaveStatus((current) => ({
       ...current,
-      [statusKey]: { type: 'loading', message: '저장 중입니다...' }
+      [statusKey]: { type: 'loading', message: '저장 중...' }
     }));
 
     try {
-      let preparedAnswers = answers;
-
-      if (lessonKey === 'lesson2' && sectionKey === 'icebreak') {
-        const drawingDataUrl = exportLesson2Drawing();
-        preparedAnswers = {
-          q1: answers.g1_q1 ?? '',
-          q2Text: answers.g1_q2 ?? '',
-          q2Drawing: drawingDataUrl,
-          q3: answers.g1_q3 ?? ''
-        };
-
-        setResponseState((current) => ({
-          ...current,
-          lesson2: {
-            ...current.lesson2,
-            sections: {
-              ...current.lesson2.sections,
-              icebreak: {
-                ...current.lesson2.sections.icebreak,
-                q2Drawing: drawingDataUrl
-              }
-            }
-          }
-        }));
-      }
-
-      const payload = {
+      await saveAnswer({
+        studentId,
+        name,
         lesson: lessonKey,
-        section: sectionKey,
-        studentName: student.studentName,
-        studentId: student.studentId,
-        answers: preparedAnswers,
-        savedAt: new Date().toISOString()
-      };
-
-      const response = await fetch('/.netlify/functions/save-response', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        section: sectionLabel || sectionKey,
+        questionId,
+        questionText,
+        answer: cleanedAnswer
       });
 
-      const result = await response.json();
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || '저장에 실패했습니다.');
-      }
-
-      const successMessage = lessonKey === 'lesson2' && sectionKey === 'icebreak' ? '생각열기 답안이 저장되었습니다.' : '응답이 저장되었습니다.';
       setSaveStatus((current) => ({
         ...current,
-        [statusKey]: { type: 'success', message: successMessage }
+        [statusKey]: {
+          type: 'success',
+          message: `저장 완료 (${new Date().toLocaleTimeString('ko-KR', { hour12: false })})`
+        }
       }));
     } catch (error) {
+      console.error('답안 저장 오류', {
+        lessonKey,
+        sectionKey,
+        questionId,
+        error
+      });
+
+      const friendlyMessage =
+        error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError')
+          ? '네트워크 연결을 확인한 뒤 다시 시도해 주세요.'
+          : error?.message || '저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+
       setSaveStatus((current) => ({
         ...current,
-        [statusKey]: { type: 'error', message: error.message || '저장 중 오류가 발생했습니다.' }
+        [statusKey]: { type: 'error', message: friendlyMessage }
       }));
     }
   };
@@ -2098,10 +2328,10 @@ function App() {
   const renderResponseSection = (lessonKey, sectionKey, sectionOverride = null, contentAfterHeader = null) => {
     const lesson = detailedLessonData[lessonKey];
     const section = sectionOverride || lesson.responseSections[sectionKey];
+    const questionGroups = getSectionQuestionGroups(lessonKey, sectionKey, section);
     const answers = responseState[lessonKey]?.sections?.[sectionKey] ?? {};
-    const status = saveStatus[`${lessonKey}-${sectionKey}`];
 
-    if (!section?.groups?.length) {
+    if (!questionGroups?.length) {
       return null;
     }
 
@@ -2121,7 +2351,7 @@ function App() {
           {contentAfterHeader}
 
           <div className="lesson-detail-stack lesson-detail-stack--compact">
-            {section.groups.map((group, groupIndex) => (
+            {questionGroups.map((group, groupIndex) => (
               <section key={group.title} className="card nested-section-card">
                 <div className="section-heading section-heading--stacked compact-gap">
                   <div>
@@ -2130,72 +2360,48 @@ function App() {
                   </div>
                 </div>
                 <div className="question-form-grid">
-                  {group.prompts.map((prompt, promptIndex) => {
+                  {(group.questions || []).map((question, promptIndex) => {
                     const answerKey = `g${groupIndex + 1}_q${promptIndex + 1}`;
-                    const isLesson2IcebreakDrawing =
-                      lessonKey === 'lesson2' && sectionKey === 'icebreak' && groupIndex === 0 && promptIndex === 1;
+                    const questionStatus = saveStatus[`${lessonKey}-${sectionKey}-${question.questionId}`];
 
                     return (
                       <article key={answerKey} className="question-card question-card--input">
                         <span className="info-item-badge">
                           {group.badgePrefix} {promptIndex + 1}
                         </span>
-                        <h4>{prompt}</h4>
-                        {isLesson2IcebreakDrawing && (
-                          <div className="draw-card">
-                            <p className="support-text">아래 순환계 모식도 위에 혈액의 이동 방향을 화살표로 그려 보세요.</p>
-                            <div className="diagram-box" style={{ width: '100%', textAlign: 'center' }}>
-                              <div className="draw-container">
-                                <img
-                                  ref={lesson2ImageRef}
-                                  src="/circulation_diagram_clean.png"
-                                  alt="순환계 모식도"
-                                  className="diagram-image"
-                                  style={{
-                                    width: '100%',
-                                    maxWidth: '1100px',
-                                    height: 'auto'
-                                  }}
-                                  onLoad={syncLesson2CanvasSize}
-                                />
-                                <canvas
-                                  ref={lesson2CanvasRef}
-                                  className="draw-canvas"
-                                  onMouseDown={handleLesson2CanvasMouseDown}
-                                  onMouseUp={handleLesson2CanvasMouseUp}
-                                  onMouseLeave={() => {
-                                    setLesson2IsDrawing(false);
-                                    setLesson2StartPoint(null);
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            <div className="draw-toolbar">
-                              <button type="button" className="primary-button" onClick={resetLesson2Drawing}>
-                                다시 그리기
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                        <h4>{question.questionText}</h4>
                         <textarea
                           className="response-textarea"
                           value={answers[answerKey] ?? ''}
                           onChange={(event) => handleAnswerChange(lessonKey, sectionKey, answerKey, event.target.value)}
                           placeholder="여기에 답변을 입력하세요."
                         />
+                        <div className="save-row">
+                          <button
+                            type="button"
+                            className="primary-button"
+                            onClick={() =>
+                              saveSingleAnswer({
+                                lessonKey,
+                                sectionKey,
+                                questionId: question.questionId,
+                                questionText: question.questionText,
+                                answer: answers[answerKey] ?? '',
+                                sectionLabel: question.sectionLabel
+                              })
+                            }
+                            disabled={questionStatus?.type === 'loading'}
+                          >
+                            {questionStatus?.type === 'loading' ? '저장 중...' : '이 답변 저장'}
+                          </button>
+                          {questionStatus && <span className={`status-message status-message--${questionStatus.type}`}>{questionStatus.message}</span>}
+                        </div>
                       </article>
                     );
                   })}
                 </div>
               </section>
             ))}
-          </div>
-
-          <div className="save-row">
-            <button type="button" className="primary-button" onClick={() => saveSectionResponses(lessonKey, sectionKey)}>
-              {section.saveLabel}
-            </button>
-            {status && <span className={`status-message status-message--${status.type}`}>{status.message}</span>}
           </div>
         </section>
       </div>
