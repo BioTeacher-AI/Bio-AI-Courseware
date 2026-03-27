@@ -295,45 +295,6 @@ function getMisconceptionMeaningLabel(statusKey) {
   return '동일';
 }
 
-function getDistributionBarsByCategory(category, summary) {
-  if (category === '오개념') {
-    const items = Array.isArray(summary?.items) ? summary.items : [];
-    const decreaseCount = items.filter((item) => item?.delta !== null && item?.delta < 0).length;
-    const sameCount = items.filter((item) => item?.delta !== null && item?.delta === 0).length;
-    const increaseCount = items.filter((item) => item?.delta !== null && item?.delta > 0).length;
-
-    return [
-      {
-        statusKey: 'decrease',
-        label: '감소',
-        meaning: getMisconceptionMeaningLabel('decrease'),
-        value: decreaseCount,
-        className: 'tone-up'
-      },
-      {
-        statusKey: 'same',
-        label: '동일',
-        meaning: getMisconceptionMeaningLabel('same'),
-        value: sameCount,
-        className: 'tone-neutral'
-      },
-      {
-        statusKey: 'increase',
-        label: '증가',
-        meaning: getMisconceptionMeaningLabel('increase'),
-        value: increaseCount,
-        className: 'tone-down'
-      }
-    ];
-  }
-
-  return [
-    { statusKey: 'increase', label: '증가', value: summary.improved, className: 'tone-up' },
-    { statusKey: 'same', label: '동일', value: summary.same, className: 'tone-neutral' },
-    { statusKey: 'decrease', label: '감소', value: summary.deepened, className: 'tone-down' }
-  ];
-}
-
 function getDirectionScore(questionName, preScore, postScore) {
   if (preScore === null || postScore === null) return 0;
   const delta = Number((postScore - preScore).toFixed(2));
@@ -2037,19 +1998,56 @@ function App() {
         ]
       : [];
 
+    const graph3Data = scientificSummary
+      ? [
+          { label: '증가', value: scientificSummary.improved, className: 'tone-up' },
+          { label: '동일', value: scientificSummary.same, className: 'tone-neutral' },
+          { label: '감소', value: scientificSummary.deepened, className: 'tone-down' }
+        ]
+      : [];
+
+    const misconceptionDecreaseCount = misconceptionItems.filter((item) => item?.delta !== null && item?.delta < 0).length;
+    const misconceptionSameCount = misconceptionItems.filter((item) => item?.delta !== null && item?.delta === 0).length;
+    const misconceptionIncreaseCount = misconceptionItems.filter((item) => item?.delta !== null && item?.delta > 0).length;
+
+    const graph4Data = misconceptionSummary
+      ? [
+          {
+            label: '감소',
+            value: misconceptionDecreaseCount,
+            className: 'tone-up',
+            meaning: getMisconceptionMeaningLabel('decrease')
+          },
+          {
+            label: '동일',
+            value: misconceptionSameCount,
+            className: 'tone-neutral',
+            meaning: getMisconceptionMeaningLabel('same')
+          },
+          {
+            label: '증가',
+            value: misconceptionIncreaseCount,
+            className: 'tone-down',
+            meaning: getMisconceptionMeaningLabel('increase')
+          }
+        ]
+      : [];
+
     const distributionCharts = compareResult
       ? [
           {
             key: 'scientific-distribution',
             tag: '그래프 3',
             title: '과학적 개념 확신도 증가/동일/감소 분포',
-            summary: scientificSummary
+            summary: scientificSummary,
+            data: graph3Data
           },
           {
             key: 'misconception-distribution',
             tag: '그래프 4',
             title: '오개념 확신도 감소/동일/증가 분포',
-            summary: misconceptionSummary
+            summary: misconceptionSummary,
+            data: graph4Data
           }
         ]
       : [];
@@ -2219,7 +2217,7 @@ function App() {
                     {chart.summary.category === '오개념' && (
                       <p className="body-text chart-note">감소 = 오개념 확신도 감소, 증가 = 오개념 확신도 증가</p>
                     )}
-                    {getDistributionBarsByCategory(chart.summary.category, chart.summary).map((bar) => (
+                    {chart.data.map((bar) => (
                       <div key={bar.label} className="chart-row" title={bar.meaning || bar.label}>
                         <span>{bar.label}</span>
                         <div className="chart-track">
