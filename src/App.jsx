@@ -289,6 +289,22 @@ function getSimpleStatusLabel(status) {
   return '동일';
 }
 
+function getDistributionBarsByCategory(category, summary) {
+  if (category === '오개념') {
+    return [
+      { label: '감소', value: summary.improved, className: 'tone-up' },
+      { label: '동일', value: summary.same, className: 'tone-neutral' },
+      { label: '증가', value: summary.deepened, className: 'tone-down' }
+    ];
+  }
+
+  return [
+    { label: '증가', value: summary.improved, className: 'tone-up' },
+    { label: '동일', value: summary.same, className: 'tone-neutral' },
+    { label: '감소', value: summary.deepened, className: 'tone-down' }
+  ];
+}
+
 function getDirectionScore(questionName, preScore, postScore) {
   if (preScore === null || postScore === null) return 0;
   const delta = Number((postScore - preScore).toFixed(2));
@@ -2171,11 +2187,7 @@ function App() {
                     </div>
                   </div>
                   <div className="simple-chart">
-                    {[
-                      { label: getSimpleStatusLabel('개선'), value: chart.summary.improved, className: 'tone-up' },
-                      { label: getSimpleStatusLabel('동일'), value: chart.summary.same, className: 'tone-neutral' },
-                      { label: getSimpleStatusLabel('심화'), value: chart.summary.deepened, className: 'tone-down' }
-                    ].map((bar) => (
+                    {getDistributionBarsByCategory(chart.summary.category, chart.summary).map((bar) => (
                       <div key={bar.label} className="chart-row">
                         <span>{bar.label}</span>
                         <div className="chart-track">
