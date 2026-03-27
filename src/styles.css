@@ -977,6 +977,11 @@ select.text-input {
   font-size: 26px;
 }
 
+
+.chart-note {
+  margin-bottom: 10px;
+}
+
 .simple-chart {
   display: grid;
   gap: 18px;

@@ -289,19 +289,43 @@ function getSimpleStatusLabel(status) {
   return '동일';
 }
 
+function getMisconceptionMeaningLabel(statusKey) {
+  if (statusKey === 'decrease') return '오개념 확신도 감소';
+  if (statusKey === 'increase') return '오개념 확신도 증가';
+  return '동일';
+}
+
 function getDistributionBarsByCategory(category, summary) {
   if (category === '오개념') {
     return [
-      { label: '감소', value: summary.improved, className: 'tone-up' },
-      { label: '동일', value: summary.same, className: 'tone-neutral' },
-      { label: '증가', value: summary.deepened, className: 'tone-down' }
+      {
+        statusKey: 'decrease',
+        label: '감소',
+        meaning: getMisconceptionMeaningLabel('decrease'),
+        value: summary.improved,
+        className: 'tone-up'
+      },
+      {
+        statusKey: 'same',
+        label: '동일',
+        meaning: getMisconceptionMeaningLabel('same'),
+        value: summary.same,
+        className: 'tone-neutral'
+      },
+      {
+        statusKey: 'increase',
+        label: '증가',
+        meaning: getMisconceptionMeaningLabel('increase'),
+        value: summary.deepened,
+        className: 'tone-down'
+      }
     ];
   }
 
   return [
-    { label: '증가', value: summary.improved, className: 'tone-up' },
-    { label: '동일', value: summary.same, className: 'tone-neutral' },
-    { label: '감소', value: summary.deepened, className: 'tone-down' }
+    { statusKey: 'increase', label: '증가', value: summary.improved, className: 'tone-up' },
+    { statusKey: 'same', label: '동일', value: summary.same, className: 'tone-neutral' },
+    { statusKey: 'decrease', label: '감소', value: summary.deepened, className: 'tone-down' }
   ];
 }
 
@@ -2187,8 +2211,11 @@ function App() {
                     </div>
                   </div>
                   <div className="simple-chart">
+                    {chart.summary.category === '오개념' && (
+                      <p className="body-text chart-note">감소 = 오개념 확신도 감소, 증가 = 오개념 확신도 증가</p>
+                    )}
                     {getDistributionBarsByCategory(chart.summary.category, chart.summary).map((bar) => (
-                      <div key={bar.label} className="chart-row">
+                      <div key={bar.label} className="chart-row" title={bar.meaning || bar.label}>
                         <span>{bar.label}</span>
                         <div className="chart-track">
                           <div
