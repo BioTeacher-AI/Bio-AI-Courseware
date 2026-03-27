@@ -297,26 +297,31 @@ function getMisconceptionMeaningLabel(statusKey) {
 
 function getDistributionBarsByCategory(category, summary) {
   if (category === '오개념') {
+    const items = Array.isArray(summary?.items) ? summary.items : [];
+    const decreaseCount = items.filter((item) => item?.delta !== null && item?.delta < 0).length;
+    const sameCount = items.filter((item) => item?.delta !== null && item?.delta === 0).length;
+    const increaseCount = items.filter((item) => item?.delta !== null && item?.delta > 0).length;
+
     return [
       {
         statusKey: 'decrease',
         label: '감소',
         meaning: getMisconceptionMeaningLabel('decrease'),
-        value: summary.improved,
+        value: decreaseCount,
         className: 'tone-up'
       },
       {
         statusKey: 'same',
         label: '동일',
         meaning: getMisconceptionMeaningLabel('same'),
-        value: summary.same,
+        value: sameCount,
         className: 'tone-neutral'
       },
       {
         statusKey: 'increase',
         label: '증가',
         meaning: getMisconceptionMeaningLabel('increase'),
-        value: summary.deepened,
+        value: increaseCount,
         className: 'tone-down'
       }
     ];
