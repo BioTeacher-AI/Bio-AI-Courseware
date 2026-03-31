@@ -15,6 +15,7 @@ const topTabs = [
 
 const lessonSubTabsMap = {
   lesson1: [
+    { id: 'ai', label: 'AI 보조교사' },
     { id: 'goal', label: '학습목표' },
     { id: 'video', label: '영상' },
     { id: 'icebreak', label: '생각열기' },
@@ -22,10 +23,10 @@ const lessonSubTabsMap = {
     { id: 'predict', label: '예상하기' },
     { id: 'observe', label: '관찰하기' },
     { id: 'explain', label: '설명하기' },
-    { id: 'summary', label: '정리하기' },
-    { id: 'ai', label: 'AI 보조교사' }
+    { id: 'summary', label: '정리하기' }
   ],
   lesson2: [
+    { id: 'ai', label: 'AI 보조교사' },
     { id: 'review', label: '이전 차시 학습 확인' },
     { id: 'goal', label: '학습목표' },
     { id: 'icebreak', label: '생각열기' },
@@ -33,10 +34,10 @@ const lessonSubTabsMap = {
     { id: 'predict', label: '예상하기' },
     { id: 'observe', label: '관찰하기' },
     { id: 'explain', label: '설명하기' },
-    { id: 'summary', label: '정리하기' },
-    { id: 'ai', label: 'AI 보조교사' }
+    { id: 'summary', label: '정리하기' }
   ],
   lesson3: [
+    { id: 'ai', label: 'AI 보조교사' },
     { id: 'review', label: '이전 차시 학습 확인' },
     { id: 'goal', label: '학습목표' },
     { id: 'icebreak', label: '생각열기' },
@@ -44,8 +45,7 @@ const lessonSubTabsMap = {
     { id: 'predict', label: '예상하기' },
     { id: 'observe', label: '관찰하기' },
     { id: 'explain', label: '설명하기' },
-    { id: 'summary', label: '정리하기' },
-    { id: 'ai', label: 'AI 보조교사' }
+    { id: 'summary', label: '정리하기' }
   ]
 };
 
@@ -2430,6 +2430,28 @@ function App() {
     </article>
   );
 
+  const renderExperimentOverviewCard = (lesson, options = {}) => {
+    const {
+      wrapperClassName = 'card detail-card accent-card accent-card--experiment',
+      tag = '실험 안내',
+      title = '실험 안내',
+      description = '실험명, 준비물, 실험 절차를 차례대로 확인한 뒤 활동을 진행합니다.'
+    } = options;
+
+    return (
+      <section className={wrapperClassName}>
+        <div className="section-heading section-heading--stacked compact-gap">
+          <div>
+            <span className="section-tag">{tag}</span>
+            <h3>{title}</h3>
+          </div>
+          <p>{description}</p>
+        </div>
+        <div className="experiment-grid">{lesson.experiments.map((experiment) => renderExperimentCard(experiment))}</div>
+      </section>
+    );
+  };
+
   const renderStudentIdentityCard = (lessonKey) => {
     const student = responseState[lessonKey];
     return (
@@ -2720,6 +2742,10 @@ function App() {
               <h5>④ 한 번에 하나의 질문만 제시됩니다.</h5>
               <p className="support-text">현재 질문에 답한 후 다음 질문으로 진행하세요.</p>
             </div>
+            <div className="ai-guide-item">
+              <h5>⑤ AI 보조교사는 수업 외 질문에는 반응하지 않아요.</h5>
+              <p className="support-text">AI 코스웨어에서 제시하는 질문에 여러분의 생각을 작성해 보는 활동에 집중해 봅시다.</p>
+            </div>
           </section>
         </section>
       </div>
@@ -2833,24 +2859,17 @@ function App() {
       const contentAfterHeader = lessonKey === 'lesson3' ? renderLesson3IcebreakResources() : null;
       content = renderResponseSection(lessonKey, 'icebreak', null, contentAfterHeader);
     } else if (activeSubTab === 'experiment') {
-      content = (
-        <div className="lesson-detail-stack">
-          <section className="card detail-card accent-card accent-card--experiment">
-            <div className="section-heading section-heading--stacked compact-gap">
-              <div>
-                <span className="section-tag">실험 안내</span>
-                <h3>실험 안내</h3>
-              </div>
-              <p>실험명, 준비물, 실험 절차를 차례대로 확인한 뒤 활동을 진행합니다.</p>
-            </div>
-            <div className="experiment-grid">{lesson.experiments.map((experiment) => renderExperimentCard(experiment))}</div>
-          </section>
-        </div>
-      );
+      content = <div className="lesson-detail-stack">{renderExperimentOverviewCard(lesson)}</div>;
     } else if (activeSubTab === 'predict') {
       content = renderResponseSection(lessonKey, 'predict', null, renderPredictHelperBanner(lessonKey));
     } else if (activeSubTab === 'observe') {
-      content = renderResponseSection(lessonKey, 'observe');
+      const observeExtraContent = renderExperimentOverviewCard(lesson, {
+        wrapperClassName: 'card nested-section-card',
+        tag: '실험 안내 다시 보기',
+        title: '실험 안내 다시 보기',
+        description: '관찰 내용을 기록하기 전에 같은 차시의 실험 안내를 다시 확인해 보세요.'
+      });
+      content = renderResponseSection(lessonKey, 'observe', null, observeExtraContent);
     } else if (activeSubTab === 'explain') {
       content = renderResponseSection(lessonKey, 'explain', null, renderExplainHelperBanner());
     } else if (activeSubTab === 'summary') {
