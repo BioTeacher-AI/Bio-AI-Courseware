@@ -390,8 +390,16 @@ const detailedLessonData = {
     videoTitle: '수업 도입 영상',
     videoDescription: '다음 두 영상을 순서대로 시청해 봅시다.',
     videos: [
-      { title: '영상 1', embedUrl: 'https://www.youtube.com/embed/6_dwzfdbgNk' },
-      { title: '영상 2', embedUrl: 'https://www.youtube.com/embed/CAVuRsz3fxw' }
+      {
+        title: '영상 1',
+        prompt: '마라톤을 하는 선수가 바나나를 보면 어떤 반응을 보일까요? 아래 영상을 통해 확인해봅시다.',
+        embedUrl: 'https://www.youtube.com/embed/6_dwzfdbgNk'
+      },
+      {
+        title: '영상 2',
+        prompt: '마라톤 선수가 경기 중 바나나를 먹는 것은 어떤 도움이 될까요? 아래 영상을 시청한 후, 생각 열기 단계로 넘어가 봅시다.',
+        embedUrl: 'https://www.youtube.com/embed/CAVuRsz3fxw'
+      }
     ],
     icebreakQuestions: [
       '마라톤 선수가 먹은 바나나가 어떻게 근육을 움직이는 에너지가 될까요?',
@@ -2806,6 +2814,7 @@ function App() {
               {lesson.videos.map((video) => (
                 <article key={video.embedUrl} className="video-embed-card">
                   <h4>{video.title}</h4>
+                  {video.prompt && <p className="video-prompt">{video.prompt}</p>}
                   <iframe
                     src={video.embedUrl}
                     title={video.title}

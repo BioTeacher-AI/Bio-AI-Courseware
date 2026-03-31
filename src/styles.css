@@ -661,6 +661,15 @@ select.text-input:focus {
   color: #223256;
 }
 
+
+.video-prompt {
+  margin: 0 0 14px;
+  color: #2a3b5f;
+  font-weight: 700;
+  line-height: 1.7;
+  text-align: left;
+}
+
 .lesson-video-frame {
   display: block;
   width: 100%;
