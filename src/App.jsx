@@ -161,9 +161,25 @@ const QUESTION_TO_LESSON = Object.fromEntries(
   Object.entries(QUESTION_TO_LESSON_RAW).map(([question, lessonKey]) => [normalizeQuestionName(question), lessonKey])
 );
 
+const EXCLUDED_ANALYSIS_COLUMNS = ['휴대폰 번호', '(만)나이', '만 나이', '나이'];
+const EXCLUDED_ANALYSIS_COLUMN_KEYS = new Set(
+  EXCLUDED_ANALYSIS_COLUMNS.map((column) => normalizeQuestionName(column).replace(/[()\[\]{}]/g, '').replace(/\s+/g, ''))
+);
+
+function isExcludedAnalysisColumn(columnName) {
+  const normalizedKey = normalizeQuestionName(columnName).replace(/[()\[\]{}]/g, '').replace(/\s+/g, '');
+  return EXCLUDED_ANALYSIS_COLUMN_KEYS.has(normalizedKey);
+}
+
 function isScientificConceptQuestion(questionName) {
+  if (isExcludedAnalysisColumn(questionName)) return false;
   const normalized = normalizeQuestionName(questionName);
   return SCIENTIFIC_CONCEPT_QUESTIONS.some((question) => normalizeQuestionName(question) === normalized);
+}
+
+function isMisconceptionQuestion(questionName) {
+  if (isExcludedAnalysisColumn(questionName)) return false;
+  return !isScientificConceptQuestion(questionName);
 }
 
 function isIncreaseBetterQuestion(questionName) {
@@ -331,6 +347,7 @@ function buildWeaknessByLesson(items = []) {
 
   items.forEach((item) => {
     if (item.preScore === null || item.postScore === null) return;
+    if (isExcludedAnalysisColumn(item.question)) return;
 
     const isScientific = isScientificConceptQuestion(item.question);
     const isWeak = isScientific ? item.postScore < item.preScore || item.postScore <= 2 : item.postScore > item.preScore;
@@ -1633,11 +1650,13 @@ function App() {
       const preScoreColumns = preHeaders.filter(
         (header) =>
           !preExcludedColumns.has(header) &&
+          !isExcludedAnalysisColumn(header) &&
           (parseScore(matchedPre?.[header]) !== null || parseScore((preRows[0] || {})[header]) !== null)
       );
       const postScoreColumns = postHeaders.filter(
         (header) =>
           !postExcludedColumns.has(header) &&
+          !isExcludedAnalysisColumn(header) &&
           (parseScore(matchedPost?.[header]) !== null || parseScore((postRows[0] || {})[header]) !== null)
       );
       const normalizedPostScoreColumns = postScoreColumns.map((header) => normalizeQuestionName(header));
@@ -1647,10 +1666,13 @@ function App() {
 
       const items = commonColumns
         .map((column, index) => {
+          if (isExcludedAnalysisColumn(column)) return null;
+
           const normalizedColumn = normalizeQuestionName(column);
           const preColumn = preHeaderMap.get(normalizedColumn) || column;
           const postColumn = postHeaderMap.get(normalizedColumn);
           if (!postColumn) return null;
+          if (isExcludedAnalysisColumn(preColumn) || isExcludedAnalysisColumn(postColumn)) return null;
 
           const pre = matchedPre ? parseScore(matchedPre[preColumn]) : null;
           const post = matchedPost ? parseScore(matchedPost[postColumn]) : null;
@@ -1659,7 +1681,12 @@ function App() {
 
           const delta = pre === null || post === null ? null : Number((post - pre).toFixed(2));
           const judgement = classifyChange(column, pre, post);
-          const category = isScientificConceptQuestion(preColumn) ? '과학적 개념' : '오개념';
+          const category = isScientificConceptQuestion(preColumn)
+            ? '과학적 개념'
+            : isMisconceptionQuestion(preColumn)
+              ? '오개념'
+              : null;
+          if (!category) return null;
           const lessonKey = getLessonKeyFromQuestion(preColumn);
 
           return {
