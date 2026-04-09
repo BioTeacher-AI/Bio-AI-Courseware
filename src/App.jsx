@@ -120,6 +120,31 @@ const SCIENTIFIC_CONCEPT_QUESTIONS = [
   '노폐물을 몸 밖으로 내보내는 과정을 배설이라고 한다.'
 ];
 
+const MISCONCEPTION_QUESTIONS = [
+  '소화는 음식으로부터 에너지를 방출하는 과정이다.',
+  '소화 효소는 세포로 구성되어 있다.',
+  '이자액에 의해 음식물이 소화되는 곳은 이자이다.',
+  '혈액은 단순히 빨간 액체이다.',
+  '심장은 몸의 왼쪽에 있다.',
+  '모든 동맥에서는 산소를 많이 포함한 혈액만 흐른다.',
+  '심장은 공기를 펌프질한다.',
+  '심장은 필요한 혈액량을 판단하여 박동수를 조절한다.',
+  '심장이 피를 정화한다.',
+  '몸 전체에 공기 튜브가 있다.',
+  '호흡은 폐에서만 일어난다.',
+  '들이마신 공기의 성분은 대부분 산소이고, 내쉰 공기의 성분은 대부분 이산화탄소이다.',
+  '공기는 폐에서 바로 심장으로 들어간다.',
+  '배설은 대변을 배출하는 것이다.',
+  '오줌을 형성하는 곳은 방광이다.',
+  '방광은 오줌을 걸러내는 기관이다.'
+];
+
+const QUESTION_ALIASES_RAW = {
+  '소화기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.': '소화 기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.',
+  "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 '폐'이다.": "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 폐이다.",
+  '들숨의 성분은 대부분 산소이고, 날숨의 성분은 대부분 이산화탄소이다.': '들이마신 공기의 성분은 대부분 산소이고, 내쉰 공기의 성분은 대부분 이산화탄소이다.'
+};
+
 const QUESTION_TO_LESSON_RAW = {
   '소화는 음식으로부터 에너지를 방출하는 과정이다.': 'lesson1',
   '소화 효소는 세포로 구성되어 있다.': 'lesson1',
@@ -161,25 +186,35 @@ const QUESTION_TO_LESSON = Object.fromEntries(
   Object.entries(QUESTION_TO_LESSON_RAW).map(([question, lessonKey]) => [normalizeQuestionName(question), lessonKey])
 );
 
-const EXCLUDED_ANALYSIS_COLUMNS = ['휴대폰 번호', '(만)나이', '만 나이', '나이'];
-const EXCLUDED_ANALYSIS_COLUMN_KEYS = new Set(
-  EXCLUDED_ANALYSIS_COLUMNS.map((column) => normalizeQuestionName(column).replace(/[()\[\]{}]/g, '').replace(/\s+/g, ''))
+const SCIENTIFIC_CONCEPT_QUESTION_KEYS = new Set(SCIENTIFIC_CONCEPT_QUESTIONS.map((question) => normalizeQuestionName(question)));
+const MISCONCEPTION_QUESTION_KEYS = new Set(MISCONCEPTION_QUESTIONS.map((question) => normalizeQuestionName(question)));
+const ALLOWED_ANALYSIS_QUESTIONS = [...MISCONCEPTION_QUESTIONS, ...SCIENTIFIC_CONCEPT_QUESTIONS];
+const ALLOWED_ANALYSIS_QUESTION_KEYS = new Set(ALLOWED_ANALYSIS_QUESTIONS.map((question) => normalizeQuestionName(question)));
+const QUESTION_ALIASES = Object.fromEntries(
+  Object.entries(QUESTION_ALIASES_RAW).map(([source, target]) => [normalizeQuestionName(source), normalizeQuestionName(target)])
 );
 
+function normalizeToAllowedQuestionKey(questionName) {
+  const normalized = normalizeQuestionName(questionName);
+  return QUESTION_ALIASES[normalized] || normalized;
+}
+
+function isAllowedAnalysisQuestion(questionName) {
+  return ALLOWED_ANALYSIS_QUESTION_KEYS.has(normalizeToAllowedQuestionKey(questionName));
+}
+
 function isExcludedAnalysisColumn(columnName) {
-  const normalizedKey = normalizeQuestionName(columnName).replace(/[()\[\]{}]/g, '').replace(/\s+/g, '');
-  return EXCLUDED_ANALYSIS_COLUMN_KEYS.has(normalizedKey);
+  return !isAllowedAnalysisQuestion(columnName);
 }
 
 function isScientificConceptQuestion(questionName) {
-  if (isExcludedAnalysisColumn(questionName)) return false;
-  const normalized = normalizeQuestionName(questionName);
-  return SCIENTIFIC_CONCEPT_QUESTIONS.some((question) => normalizeQuestionName(question) === normalized);
+  const normalized = normalizeToAllowedQuestionKey(questionName);
+  return SCIENTIFIC_CONCEPT_QUESTION_KEYS.has(normalized);
 }
 
 function isMisconceptionQuestion(questionName) {
-  if (isExcludedAnalysisColumn(questionName)) return false;
-  return !isScientificConceptQuestion(questionName);
+  const normalized = normalizeToAllowedQuestionKey(questionName);
+  return MISCONCEPTION_QUESTION_KEYS.has(normalized);
 }
 
 function isIncreaseBetterQuestion(questionName) {
@@ -187,7 +222,8 @@ function isIncreaseBetterQuestion(questionName) {
 }
 
 function getLessonKeyFromQuestion(questionName) {
-  return QUESTION_TO_LESSON[normalizeQuestionName(questionName)] || null;
+  if (!isAllowedAnalysisQuestion(questionName)) return null;
+  return QUESTION_TO_LESSON[normalizeToAllowedQuestionKey(questionName)] || null;
 }
 
 function parseScore(value) {
@@ -1624,8 +1660,8 @@ function App() {
       const postRows = localPostPayload.data;
       const preHeaders = Object.keys(preRows[0] || {});
       const postHeaders = Object.keys(postRows[0] || {});
-      const preHeaderMap = new Map(preHeaders.map((header) => [normalizeQuestionName(header), header]));
-      const postHeaderMap = new Map(postHeaders.map((header) => [normalizeQuestionName(header), header]));
+      const preHeaderMap = new Map(preHeaders.map((header) => [normalizeToAllowedQuestionKey(header), header]));
+      const postHeaderMap = new Map(postHeaders.map((header) => [normalizeToAllowedQuestionKey(header), header]));
 
       const preNameCol = findColumn(preRows[0], ['이름']);
       const preStudentCol = findColumn(preRows[0], ['학번']);
@@ -1645,58 +1681,30 @@ function App() {
         throw new Error('일치하는 학생 정보를 찾을 수 없습니다.');
       }
 
-      const preExcludedColumns = new Set([preNameCol, preStudentCol, preTimestampCol]);
-      const postExcludedColumns = new Set([postNameCol, postStudentCol, postTimestampCol]);
-      const preScoreColumns = preHeaders.filter(
-        (header) =>
-          !preExcludedColumns.has(header) &&
-          !isExcludedAnalysisColumn(header) &&
-          (parseScore(matchedPre?.[header]) !== null || parseScore((preRows[0] || {})[header]) !== null)
-      );
-      const postScoreColumns = postHeaders.filter(
-        (header) =>
-          !postExcludedColumns.has(header) &&
-          !isExcludedAnalysisColumn(header) &&
-          (parseScore(matchedPost?.[header]) !== null || parseScore((postRows[0] || {})[header]) !== null)
-      );
-      const normalizedPostScoreColumns = postScoreColumns.map((header) => normalizeQuestionName(header));
-      const commonColumns = preScoreColumns.filter((header) =>
-        normalizedPostScoreColumns.includes(normalizeQuestionName(header))
-      );
+      const items = ALLOWED_ANALYSIS_QUESTIONS
+        .map((question, index) => {
+          const questionKey = normalizeQuestionName(question);
+          const preColumn = preHeaderMap.get(questionKey);
+          const postColumn = postHeaderMap.get(questionKey);
+          if (!preColumn && !postColumn) return null;
 
-      const items = commonColumns
-        .map((column, index) => {
-          if (isExcludedAnalysisColumn(column)) return null;
-
-          const normalizedColumn = normalizeQuestionName(column);
-          const preColumn = preHeaderMap.get(normalizedColumn) || column;
-          const postColumn = postHeaderMap.get(normalizedColumn);
-          if (!postColumn) return null;
-          if (isExcludedAnalysisColumn(preColumn) || isExcludedAnalysisColumn(postColumn)) return null;
-
-          const pre = matchedPre ? parseScore(matchedPre[preColumn]) : null;
-          const post = matchedPost ? parseScore(matchedPost[postColumn]) : null;
-
+          const pre = preColumn && matchedPre ? parseScore(matchedPre[preColumn]) : null;
+          const post = postColumn && matchedPost ? parseScore(matchedPost[postColumn]) : null;
           if (pre === null && post === null) return null;
 
           const delta = pre === null || post === null ? null : Number((post - pre).toFixed(2));
-          const judgement = classifyChange(column, pre, post);
-          const category = isScientificConceptQuestion(preColumn)
-            ? '과학적 개념'
-            : isMisconceptionQuestion(preColumn)
-              ? '오개념'
-              : null;
-          if (!category) return null;
-          const lessonKey = getLessonKeyFromQuestion(preColumn);
+          const judgement = classifyChange(question, pre, post);
+          const category = SCIENTIFIC_CONCEPT_QUESTION_KEYS.has(questionKey) ? '과학적 개념' : '오개념';
+          const lessonKey = getLessonKeyFromQuestion(question);
 
           return {
             index,
-            question: preColumn,
+            question,
             preScore: pre,
             postScore: post,
             delta,
             judgement,
-            directionScore: getDirectionScore(column, pre, post),
+            directionScore: getDirectionScore(question, pre, post),
             category,
             lessonKey
           };
