@@ -121,28 +121,31 @@ const SCIENTIFIC_CONCEPT_QUESTIONS = [
 ];
 
 const MISCONCEPTION_QUESTIONS = [
-  '소화는 음식으로부터 에너지를 방출하는 과정이다.',
-  '소화 효소는 세포로 구성되어 있다.',
-  '이자액에 의해 음식물이 소화되는 곳은 이자이다.',
-  '혈액은 단순히 빨간 액체이다.',
+  '혈액은 단순한 빨간 액체이다.',
   '심장은 몸의 왼쪽에 있다.',
   '모든 동맥에서는 산소를 많이 포함한 혈액만 흐른다.',
   '심장은 공기를 펌프질한다.',
-  '심장은 필요한 혈액량을 판단하여 박동수를 조절한다.',
+  '심장이 피를 만든다.',
   '심장이 피를 정화한다.',
+  '소화는 음식으로부터 에너지를 방출하는 과정이다.',
+  '소화 효소는 세포로 구성되어 있다.',
+  '이자액에 의해 음식물이 소화되는 곳은 이자이다.',
   '몸 전체에 공기 튜브가 있다.',
   '호흡은 폐에서만 일어난다.',
-  '들이마신 공기의 성분은 대부분 산소이고, 내쉰 공기의 성분은 대부분 이산화탄소이다.',
+  '들숨의 성분은 대부분 산소이고, 날숨의 성분은 대부분 이산화탄소이다.',
   '공기는 폐에서 바로 심장으로 들어간다.',
   '배설은 대변을 배출하는 것이다.',
-  '오줌을 형성하는 곳은 방광이다.',
+  '오줌을 형성하는 것은 방광이다.',
   '방광은 오줌을 걸러내는 기관이다.'
 ];
 
 const QUESTION_ALIASES_RAW = {
   '소화기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.': '소화 기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.',
   "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 '폐'이다.": "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 폐이다.",
-  '들숨의 성분은 대부분 산소이고, 날숨의 성분은 대부분 이산화탄소이다.': '들이마신 공기의 성분은 대부분 산소이고, 내쉰 공기의 성분은 대부분 이산화탄소이다.'
+  '들이마신 공기의 성분은 대부분 산소이고, 내쉰 공기의 성분은 대부분 이산화탄소이다.': '들숨의 성분은 대부분 산소이고, 날숨의 성분은 대부분 이산화탄소이다.',
+  '혈액은 단순히 빨간 액체이다.': '혈액은 단순한 빨간 액체이다.',
+  '심장은 필요한 혈액량을 판단하여 박동수를 조절한다.': '심장이 피를 만든다.',
+  '오줌을 형성하는 곳은 방광이다.': '오줌을 형성하는 것은 방광이다.'
 };
 
 const QUESTION_TO_LESSON_RAW = {
@@ -153,11 +156,13 @@ const QUESTION_TO_LESSON_RAW = {
   '소화기관에는 입, 식도, 위, 작은 창자, 큰 창자, 항문 등이 있다.': 'lesson1',
 
   '혈액은 단순히 빨간 액체이다.': 'lesson2',
+  '혈액은 단순한 빨간 액체이다.': 'lesson2',
   '심장은 우리 몸에 필요한 영양소, 산소를 온몸으로 운반한다.': 'lesson2',
   '심장은 몸의 왼쪽에 있다.': 'lesson2',
   '모든 동맥에서는 산소를 많이 포함한 혈액만 흐른다.': 'lesson2',
   '심장은 공기를 펌프질한다.': 'lesson2',
   '심장은 필요한 혈액량을 판단하여 박동수를 조절한다.': 'lesson2',
+  '심장이 피를 만든다.': 'lesson2',
   '심장이 피를 정화한다.': 'lesson2',
   '몸 전체에 공기 튜브가 있다.': 'lesson2',
   "몸 밖에서 들어온 산소를 받아들이고 몸속에서 생긴 이산화탄소를 몸 밖으로 내보내는 기관은 폐이다.": 'lesson2',
@@ -170,6 +175,7 @@ const QUESTION_TO_LESSON_RAW = {
   '노폐물을 몸 밖으로 내보내는 과정을 배설이라고 한다.': 'lesson3',
   '배설은 대변을 배출하는 것이다.': 'lesson3',
   '오줌을 형성하는 곳은 방광이다.': 'lesson3',
+  '오줌을 형성하는 것은 방광이다.': 'lesson3',
   '방광은 오줌을 걸러내는 기관이다.': 'lesson3'
 };
 
@@ -1686,11 +1692,9 @@ function App() {
           const questionKey = normalizeQuestionName(question);
           const preColumn = preHeaderMap.get(questionKey);
           const postColumn = postHeaderMap.get(questionKey);
-          if (!preColumn && !postColumn) return null;
 
           const pre = preColumn && matchedPre ? parseScore(matchedPre[preColumn]) : null;
           const post = postColumn && matchedPost ? parseScore(matchedPost[postColumn]) : null;
-          if (pre === null && post === null) return null;
 
           const delta = pre === null || post === null ? null : Number((post - pre).toFixed(2));
           const judgement = classifyChange(question, pre, post);
