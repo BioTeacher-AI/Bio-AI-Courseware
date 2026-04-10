@@ -1693,10 +1693,12 @@ function App() {
           const preColumn = preHeaderMap.get(questionKey);
           const postColumn = postHeaderMap.get(questionKey);
 
-          const pre = preColumn && matchedPre ? parseScore(matchedPre[preColumn]) : null;
-          const post = postColumn && matchedPost ? parseScore(matchedPost[postColumn]) : null;
+          const preRaw = preColumn && matchedPre ? parseScore(matchedPre[preColumn]) : null;
+          const postRaw = postColumn && matchedPost ? parseScore(matchedPost[postColumn]) : null;
+          const pre = preRaw ?? 0;
+          const post = postRaw ?? 0;
 
-          const delta = pre === null || post === null ? null : Number((post - pre).toFixed(2));
+          const delta = Number((post - pre).toFixed(2));
           const judgement = classifyChange(question, pre, post);
           const category = SCIENTIFIC_CONCEPT_QUESTION_KEYS.has(questionKey) ? '과학적 개념' : '오개념';
           const lessonKey = getLessonKeyFromQuestion(question);
