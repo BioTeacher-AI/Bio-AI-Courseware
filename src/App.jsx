@@ -245,6 +245,25 @@ function parseDate(value) {
   const raw = String(value).trim();
   if (!raw) return null;
 
+  const koreanMeridiemMatch = raw.match(
+    /(\d{4})[.\-/]\s*(\d{1,2})[.\-/]\s*(\d{1,2})\D+(오전|오후)\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/
+  );
+  if (koreanMeridiemMatch) {
+    const [, year, month, day, meridiem, hh, mm, ss = '0'] = koreanMeridiemMatch;
+    let hour = Number(hh);
+    if (meridiem === '오후' && hour < 12) hour += 12;
+    if (meridiem === '오전' && hour === 12) hour = 0;
+    return new Date(Number(year), Number(month) - 1, Number(day), hour, Number(mm), Number(ss));
+  }
+
+  const simpleDateTimeMatch = raw.match(
+    /(\d{4})[.\-/]\s*(\d{1,2})[.\-/]\s*(\d{1,2})(?:\D+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/
+  );
+  if (simpleDateTimeMatch) {
+    const [, year, month, day, hh = '0', mm = '0', ss = '0'] = simpleDateTimeMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day), Number(hh), Number(mm), Number(ss));
+  }
+
   const normalized = raw
     .replace(/\.\s*/g, '-')
     .replace(/\//g, '-')
