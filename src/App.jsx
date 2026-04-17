@@ -2687,6 +2687,42 @@ function App() {
     </div>
   );
 
+  const renderLesson2IcebreakCirculatoryPrompt = () => {
+    const narrativeAnswer = responseState.lesson2?.sections?.icebreak?.q2DiagramNarrative ?? '';
+
+    return (
+      <section className="card nested-section-card">
+        <div className="section-heading section-heading--stacked compact-gap">
+          <div>
+            <span className="section-tag">순환계 활동</span>
+            <h4>모식도 기반 생각 열기</h4>
+          </div>
+        </div>
+
+        <p className="body-text">
+          아래 그림은 우리 몸의 순환계를 구조화한 모식도입니다. 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지
+          생각해 보고 아래 모식도에 화살표로 나타내 봅시다. 또한, 모식도에 나와 있는 각 혈관의 명칭과 그 혈관을 지나는 혈액의
+          산소의 양도 함께 표시해 봅시다.
+        </p>
+
+        <div className="media-frame media-frame--figure">
+          <img src="/images/circulatory-diagram.png" alt="순환계 모식도" className="lesson-image lesson-image--centered" />
+        </div>
+
+        <label className="field-label">
+          <span>답변 작성</span>
+          <textarea
+            className="response-textarea response-textarea--large"
+            placeholder="여기에 자신의 생각을 작성해보세요."
+            value={narrativeAnswer}
+            onChange={(event) => handleAnswerChange('lesson2', 'icebreak', 'q2DiagramNarrative', event.target.value)}
+          />
+        </label>
+        <p className="support-text">한 문장 이상으로 자신의 생각과 이유를 함께 작성해 보세요.</p>
+      </section>
+    );
+  };
+
 
   const renderNextStepButton = (lessonKey) => {
     const currentSubTabId = lessonTabState[lessonKey];
@@ -2920,7 +2956,12 @@ function App() {
         </div>
       );
     } else if (activeSubTab === 'icebreak') {
-      const contentAfterHeader = lessonKey === 'lesson3' ? renderLesson3IcebreakResources() : null;
+      const contentAfterHeader =
+        lessonKey === 'lesson3'
+          ? renderLesson3IcebreakResources()
+          : lessonKey === 'lesson2'
+            ? renderLesson2IcebreakCirculatoryPrompt()
+            : null;
       content = renderResponseSection(lessonKey, 'icebreak', null, contentAfterHeader);
     } else if (activeSubTab === 'experiment') {
       content = <div className="lesson-detail-stack">{renderExperimentOverviewCard(lesson)}</div>;
