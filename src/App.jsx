@@ -457,7 +457,8 @@ function drawArrow(ctx, fromX, fromY, toX, toY) {
 const LESSON2_OPEN_Q2_GUIDE_TEXT =
   '아래 그림은 우리 몸의 순환계를 구조화한 모식도입니다. 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 생각해 보고, 모식도에 화살표로 나타내 봅시다. 또한 각 혈관의 명칭과 그 혈관을 지나는 혈액의 산소의 양을 적어 봅시다.';
 
-const LESSON2_VESSEL_FIELD_KEYS = ['q2Vessel1', 'q2Vessel2', 'q2Vessel3', 'q2Vessel4', 'q2Vessel5'];
+const LESSON2_VESSEL_FIELD_KEYS = ['q2Vessel1', 'q2Vessel2', 'q2Vessel3', 'q2Vessel4'];
+const LESSON2_VESSEL_NAME_OPTIONS = ['대동맥', '대정맥', '폐동맥', '폐정맥'];
 
 const detailedLessonData = {
   lesson1: {
@@ -2805,8 +2806,7 @@ function App() {
                       <tr key={key}>
                         <td>{index + 1}</td>
                         <td>
-                          <input
-                            type="text"
+                          <select
                             className="text-input"
                             value={row.vesselName ?? ''}
                             onChange={(event) =>
@@ -2815,8 +2815,14 @@ function App() {
                                 vesselName: event.target.value
                               })
                             }
-                            placeholder="예: 대동맥"
-                          />
+                          >
+                            <option value="">선택하세요</option>
+                            {LESSON2_VESSEL_NAME_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td>
                           <input
