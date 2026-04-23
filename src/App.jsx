@@ -454,6 +454,11 @@ function drawArrow(ctx, fromX, fromY, toX, toY) {
   ctx.stroke();
 }
 
+const LESSON2_OPEN_Q2_GUIDE_TEXT =
+  '아래 그림은 우리 몸의 순환계를 구조화한 모식도입니다. 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 생각해 보고, 모식도에 화살표로 나타내 봅시다. 또한 각 혈관의 명칭과 그 혈관을 지나는 혈액의 산소의 양을 적어 봅시다.';
+
+const LESSON2_VESSEL_FIELD_KEYS = ['q2Vessel1', 'q2Vessel2', 'q2Vessel3', 'q2Vessel4', 'q2Vessel5'];
+
 const detailedLessonData = {
   lesson1: {
     title: '1차시: 소화계',
@@ -992,7 +997,10 @@ const STUDENT_QUESTION_GROUPS = {
       {
         title: '생각열기 질문',
         badgePrefix: '질문',
-        questions: [{ questionId: 'L2_Open_Q1', sectionLabel: '생각열기', questionText: '마라톤 선수들은 어떻게 지치지 않고 계속해서 달릴 수 있을까요?' }]
+        questions: [
+          { questionId: 'L2_Open_Q1', sectionLabel: '생각열기', questionText: '마라톤 선수들은 어떻게 지치지 않고 계속해서 달릴 수 있을까요?' },
+          { questionId: 'L2_Open_Q2', sectionLabel: '생각열기', questionText: LESSON2_OPEN_Q2_GUIDE_TEXT }
+        ]
       }
     ],
     predict: [
@@ -1507,6 +1515,32 @@ function App() {
         answersByQuestionId[question.questionId] = sectionAnswers[answerKey] || '';
       });
     });
+
+    if (lessonKey === 'lesson2' && sectionKey === 'icebreak') {
+      const drawingDataUrl = exportLesson2Drawing() || sectionAnswers.q2Drawing || '';
+      const vesselRows = LESSON2_VESSEL_FIELD_KEYS.map((key, index) => {
+        const row = sectionAnswers[key] || {};
+        return {
+          order: index + 1,
+          vesselName: String(row.vesselName ?? '').trim(),
+          oxygenLevel: String(row.oxygenLevel ?? '').trim()
+        };
+      }).filter((row) => row.vesselName || row.oxygenLevel);
+
+      if (drawingDataUrl) {
+        handleAnswerChange('lesson2', 'icebreak', 'q2Drawing', drawingDataUrl);
+      }
+
+      answersByQuestionId.L2_Open_Q2 = JSON.stringify(
+        {
+          prompt: LESSON2_OPEN_Q2_GUIDE_TEXT,
+          drawingDataUrl,
+          vessels: vesselRows
+        },
+        null,
+        2
+      );
+    }
 
     setSaveStatus((current) => ({
       ...current,
@@ -2688,37 +2722,136 @@ function App() {
   );
 
   const renderLesson2IcebreakCirculatoryPrompt = () => {
-    const narrativeAnswer = responseState.lesson2?.sections?.icebreak?.q2DiagramNarrative ?? '';
+    const sectionAnswers = responseState.lesson2?.sections?.icebreak || {};
+    const questionGroups = getSectionQuestionGroups('lesson2', 'icebreak', null);
+    const q1Answer = sectionAnswers.g1_q1 ?? '';
+    const status = saveStatus['lesson2-icebreak'];
 
     return (
-      <section className="card nested-section-card">
+      <section className="card detail-card">
         <div className="section-heading section-heading--stacked compact-gap">
           <div>
-            <span className="section-tag">순환계 활동</span>
-            <h4>모식도 기반 생각 열기</h4>
+            <span className="section-tag">응답 작성</span>
+            <h3>생각열기</h3>
           </div>
         </div>
+        <p className="body-text">2차시 학습의 출발점이 되는 질문에 답해 봅시다.</p>
 
-        <p className="body-text">
-          아래 그림은 우리 몸의 순환계를 구조화한 모식도입니다. 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지
-          생각해 보고 아래 모식도에 화살표로 나타내 봅시다. 또한, 모식도에 나와 있는 각 혈관의 명칭과 그 혈관을 지나는 혈액의
-          산소의 양도 함께 표시해 봅시다.
-        </p>
+        <div className="lesson-detail-stack lesson-detail-stack--compact">
+          <section className="card nested-section-card">
+            <span className="info-item-badge">질문 1</span>
+            <h4>마라톤 선수들은 어떻게 지치지 않고 계속해서 달릴 수 있을까요?</h4>
+            <textarea
+              className="response-textarea"
+              value={q1Answer}
+              onChange={(event) => handleAnswerChange('lesson2', 'icebreak', 'g1_q1', event.target.value)}
+              placeholder="여기에 답변을 입력하세요."
+            />
+          </section>
 
-        <div className="media-frame media-frame--figure">
-          <img src="/images/circulatory-diagram.png" alt="순환계 모식도" className="lesson-image lesson-image--centered" />
+          <section className="card nested-section-card">
+            <span className="info-item-badge">질문 2</span>
+            <h4>{LESSON2_OPEN_Q2_GUIDE_TEXT}</h4>
+
+            <div className="draw-container">
+              <img
+                ref={lesson2ImageRef}
+                src="/images/circulatory-diagram.png"
+                alt="순환계 모식도"
+                className="diagram-image"
+                onLoad={syncLesson2CanvasSize}
+              />
+              <canvas
+                ref={lesson2CanvasRef}
+                className="draw-canvas"
+                onMouseDown={handleLesson2CanvasMouseDown}
+                onMouseUp={handleLesson2CanvasMouseUp}
+                onMouseLeave={() => {
+                  setLesson2IsDrawing(false);
+                  setLesson2StartPoint(null);
+                }}
+              />
+            </div>
+
+            <div className="draw-toolbar">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  const drawing = exportLesson2Drawing();
+                  handleAnswerChange('lesson2', 'icebreak', 'q2Drawing', drawing);
+                }}
+              >
+                그림 저장
+              </button>
+              <button type="button" className="secondary-button" onClick={resetLesson2Drawing}>
+                그리기 초기화
+              </button>
+            </div>
+
+            <div className="table-wrap">
+              <table className="response-table">
+                <thead>
+                  <tr>
+                    <th>번호</th>
+                    <th>혈관 명칭</th>
+                    <th>산소의 양</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {LESSON2_VESSEL_FIELD_KEYS.map((key, index) => {
+                    const row = sectionAnswers[key] || { vesselName: '', oxygenLevel: '' };
+                    return (
+                      <tr key={key}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <input
+                            type="text"
+                            className="text-input"
+                            value={row.vesselName ?? ''}
+                            onChange={(event) =>
+                              handleAnswerChange('lesson2', 'icebreak', key, {
+                                ...row,
+                                vesselName: event.target.value
+                              })
+                            }
+                            placeholder="예: 대동맥"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="text-input"
+                            value={row.oxygenLevel ?? ''}
+                            onChange={(event) =>
+                              handleAnswerChange('lesson2', 'icebreak', key, {
+                                ...row,
+                                oxygenLevel: event.target.value
+                              })
+                            }
+                            placeholder="예: 산소가 많음"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
-        <label className="field-label">
-          <span>답변 작성</span>
-          <textarea
-            className="response-textarea response-textarea--large"
-            placeholder="여기에 자신의 생각을 작성해보세요."
-            value={narrativeAnswer}
-            onChange={(event) => handleAnswerChange('lesson2', 'icebreak', 'q2DiagramNarrative', event.target.value)}
-          />
-        </label>
-        <p className="support-text">한 문장 이상으로 자신의 생각과 이유를 함께 작성해 보세요.</p>
+        <div className="save-row">
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => handleSaveSectionAll({ lessonKey: 'lesson2', sectionKey: 'icebreak', questionGroups })}
+            disabled={status?.type === 'loading'}
+          >
+            {status?.type === 'loading' ? '저장 중...' : '전체 답안 저장'}
+          </button>
+          {status && <span className={`status-message status-message--${status.type}`}>{status.message}</span>}
+        </div>
       </section>
     );
   };
@@ -2956,13 +3089,12 @@ function App() {
         </div>
       );
     } else if (activeSubTab === 'icebreak') {
-      const contentAfterHeader =
-        lessonKey === 'lesson3'
-          ? renderLesson3IcebreakResources()
-          : lessonKey === 'lesson2'
-            ? renderLesson2IcebreakCirculatoryPrompt()
-            : null;
-      content = renderResponseSection(lessonKey, 'icebreak', null, contentAfterHeader);
+      if (lessonKey === 'lesson2') {
+        content = <div className="lesson-detail-stack">{renderLesson2IcebreakCirculatoryPrompt()}</div>;
+      } else {
+        const contentAfterHeader = lessonKey === 'lesson3' ? renderLesson3IcebreakResources() : null;
+        content = renderResponseSection(lessonKey, 'icebreak', null, contentAfterHeader);
+      }
     } else if (activeSubTab === 'experiment') {
       content = <div className="lesson-detail-stack">{renderExperimentOverviewCard(lesson)}</div>;
     } else if (activeSubTab === 'predict') {
