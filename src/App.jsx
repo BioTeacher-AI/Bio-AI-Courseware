@@ -2569,7 +2569,7 @@ function App() {
               type="text"
               value={student.studentName}
               onChange={(event) => handleStudentFieldChange(lessonKey, 'studentName', event.target.value)}
-              placeholder="예: 홍길동"
+              placeholder="이름을 입력하세요"
               className="text-input"
             />
           </label>
@@ -2579,7 +2579,7 @@ function App() {
               type="text"
               value={student.studentId}
               onChange={(event) => handleStudentFieldChange(lessonKey, 'studentId', event.target.value)}
-              placeholder="예: 20230001"
+              placeholder="학번을 입력하세요"
               className="text-input"
             />
           </label>
@@ -2729,7 +2729,9 @@ function App() {
     const status = saveStatus['lesson2-icebreak'];
 
     return (
-      <section className="card detail-card">
+      <div className="lesson-detail-stack">
+        {renderStudentIdentityCard('lesson2')}
+        <section className="card detail-card">
         <div className="section-heading section-heading--stacked compact-gap">
           <div>
             <span className="section-tag">응답 작성</span>
@@ -2858,7 +2860,8 @@ function App() {
           </button>
           {status && <span className={`status-message status-message--${status.type}`}>{status.message}</span>}
         </div>
-      </section>
+        </section>
+      </div>
     );
   };
 
