@@ -1338,37 +1338,78 @@ function App() {
   const getLesson2CanvasPoint = (event) => {
     const canvas = lesson2CanvasRef.current;
     if (!canvas) return null;
+
     const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY
     };
   };
 
-  const handleLesson2CanvasMouseDown = (event) => {
+  const finishLesson2PointerDraw = (event, shouldSave = true) => {
+    const target = event.currentTarget;
+
+    if (target && typeof target.releasePointerCapture === 'function') {
+      try {
+        target.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        // Ignore capture release errors for unsupported pointers.
+      }
+    }
+
+    if (shouldSave && lesson2IsDrawing && lesson2StartPoint) {
+      const point = getLesson2CanvasPoint(event);
+      if (point) {
+        lesson2ArrowsRef.current = [
+          ...lesson2ArrowsRef.current,
+          {
+            fromX: lesson2StartPoint.x,
+            fromY: lesson2StartPoint.y,
+            toX: point.x,
+            toY: point.y
+          }
+        ];
+        redrawLesson2Canvas();
+      }
+    }
+
+    setLesson2IsDrawing(false);
+    setLesson2StartPoint(null);
+  };
+
+  const handleLesson2CanvasPointerDown = (event) => {
     const point = getLesson2CanvasPoint(event);
     if (!point) return;
+
+    if (typeof event.currentTarget.setPointerCapture === 'function') {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
     setLesson2IsDrawing(true);
     setLesson2StartPoint(point);
   };
 
-  const handleLesson2CanvasMouseUp = (event) => {
-    if (!lesson2IsDrawing || !lesson2StartPoint) return;
-    const point = getLesson2CanvasPoint(event);
-    if (!point) return;
+  const handleLesson2CanvasPointerMove = (event) => {
+    if (!lesson2IsDrawing) return;
+    event.preventDefault();
+  };
 
-    lesson2ArrowsRef.current = [
-      ...lesson2ArrowsRef.current,
-      {
-        fromX: lesson2StartPoint.x,
-        fromY: lesson2StartPoint.y,
-        toX: point.x,
-        toY: point.y
-      }
-    ];
-    redrawLesson2Canvas();
-    setLesson2IsDrawing(false);
-    setLesson2StartPoint(null);
+  const handleLesson2CanvasPointerUp = (event) => {
+    finishLesson2PointerDraw(event, true);
+  };
+
+  const handleLesson2CanvasPointerCancel = (event) => {
+    finishLesson2PointerDraw(event, false);
+  };
+
+  const handleLesson2CanvasPointerLeave = (event) => {
+    if (!lesson2IsDrawing) return;
+    finishLesson2PointerDraw(event, true);
   };
 
   const resetLesson2Drawing = () => {
@@ -2767,12 +2808,11 @@ function App() {
               <canvas
                 ref={lesson2CanvasRef}
                 className="draw-canvas"
-                onMouseDown={handleLesson2CanvasMouseDown}
-                onMouseUp={handleLesson2CanvasMouseUp}
-                onMouseLeave={() => {
-                  setLesson2IsDrawing(false);
-                  setLesson2StartPoint(null);
-                }}
+                onPointerDown={handleLesson2CanvasPointerDown}
+                onPointerMove={handleLesson2CanvasPointerMove}
+                onPointerUp={handleLesson2CanvasPointerUp}
+                onPointerCancel={handleLesson2CanvasPointerCancel}
+                onPointerLeave={handleLesson2CanvasPointerLeave}
               />
             </div>
 
