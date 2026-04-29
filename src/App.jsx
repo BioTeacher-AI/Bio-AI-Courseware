@@ -458,7 +458,7 @@ const LESSON2_OPEN_Q2_GUIDE_TEXT =
   '아래 그림은 우리 몸의 순환계를 구조화한 모식도입니다. 경기 중인 마라톤 선수의 몸속에서 혈액이 어떻게 이동할지 생각해 보고, 모식도에 화살표로 나타내 봅시다. 또한 각 혈관의 명칭과 그 혈관을 지나는 혈액의 산소의 양을 적어 봅시다.';
 
 const LESSON2_VESSEL_FIELD_KEYS = ['q2Vessel1', 'q2Vessel2', 'q2Vessel3', 'q2Vessel4'];
-const LESSON2_VESSEL_NAME_OPTIONS = ['대동맥', '대정맥', '폐동맥', '폐정맥'];
+const LESSON2_FIXED_VESSELS = ['대동맥', '대정맥', '폐동맥', '폐정맥'];
 
 const detailedLessonData = {
   lesson1: {
@@ -1564,10 +1564,10 @@ function App() {
         const row = sectionAnswers[key] || {};
         return {
           order: index + 1,
-          vesselName: String(row.vesselName ?? '').trim(),
+          vesselName: LESSON2_FIXED_VESSELS[index],
           oxygenLevel: String(row.oxygenLevel ?? '').trim()
         };
-      }).filter((row) => row.vesselName || row.oxygenLevel);
+      }).filter((row) => row.oxygenLevel);
 
       if (drawingDataUrl) {
         handleAnswerChange('lesson2', 'icebreak', 'q2Drawing', drawingDataUrl);
@@ -2817,16 +2817,6 @@ function App() {
             </div>
 
             <div className="draw-toolbar">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  const drawing = exportLesson2Drawing();
-                  handleAnswerChange('lesson2', 'icebreak', 'q2Drawing', drawing);
-                }}
-              >
-                그림 저장
-              </button>
               <button type="button" className="secondary-button" onClick={resetLesson2Drawing}>
                 그리기 초기화
               </button>
@@ -2836,36 +2826,16 @@ function App() {
               <table className="response-table">
                 <thead>
                   <tr>
-                    <th>번호</th>
-                    <th>혈관 명칭</th>
+                    <th>혈관 종류</th>
                     <th>산소의 양</th>
                   </tr>
                 </thead>
                 <tbody>
                   {LESSON2_VESSEL_FIELD_KEYS.map((key, index) => {
-                    const row = sectionAnswers[key] || { vesselName: '', oxygenLevel: '' };
+                    const row = sectionAnswers[key] || { oxygenLevel: '' };
                     return (
                       <tr key={key}>
-                        <td>{index + 1}</td>
-                        <td>
-                          <select
-                            className="text-input"
-                            value={row.vesselName ?? ''}
-                            onChange={(event) =>
-                              handleAnswerChange('lesson2', 'icebreak', key, {
-                                ...row,
-                                vesselName: event.target.value
-                              })
-                            }
-                          >
-                            <option value="">선택하세요</option>
-                            {LESSON2_VESSEL_NAME_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
+                        <td>{LESSON2_FIXED_VESSELS[index]}</td>
                         <td>
                           <input
                             type="text"
@@ -2877,7 +2847,7 @@ function App() {
                                 oxygenLevel: event.target.value
                               })
                             }
-                            placeholder="예: 산소가 많음"
+                            placeholder="산소가 많음 / 산소가 적음"
                           />
                         </td>
                       </tr>
